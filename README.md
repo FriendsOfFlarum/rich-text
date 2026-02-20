@@ -1,6 +1,6 @@
 # FoF Rich Text
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg) [![Latest Stable Version](https://img.shields.io/packagist/v/fof/rich-text.svg)](https://packagist.org/packages/fof/rich-text)
+![License](https://img.shields.io/badge/license-MIT-blue.svg) [![Latest Stable Version](https://img.shields.io/packagist/v/fof/rich-text.svg)](https://packagist.org/packages/fof/rich-text) [![Total Downloads](https://img.shields.io/packagist/dt/fof/rich-text.svg)](https://packagist.org/packages/fof/rich-text) [![OpenCollective](https://img.shields.io/badge/opencollective-fof-blue.svg)](https://opencollective.com/fof/donate)
 
 A [Flarum](http://flarum.org) extension. Fully integrated Rich Text Editor for Flarum.
 
