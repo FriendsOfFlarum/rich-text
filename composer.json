@@ -9,7 +9,7 @@
     "support": {
         "issues": "https://github.com/FriendsOfFlarum/rich-text/issues",
         "source": "https://github.com/FriendsOfFlarum/rich-text",
-        "forum": "https://discuss.flarum.org/d/26455-wysiwyg-rich-text-editor"
+        "forum": "https://discuss.flarum.org/d/38789-friendsofflarum-rich-text-wysiwyg"
     },
     "homepage": "https://friendsofflarum.org",
     "require": {
