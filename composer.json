@@ -1,0 +1,79 @@
+{
+    "name": "fof/rich-text",
+    "description": "Rich Text Editor for Flarum",
+    "keywords": [
+        "flarum"
+    ],
+    "type": "flarum-extension",
+    "license": "MIT",
+    "support": {
+        "issues": "https://github.com/FriendsOfFlarum/rich-text/issues",
+        "source": "https://github.com/FriendsOfFlarum/rich-text",
+        "forum": "https://discuss.flarum.org/d/26455-wysiwyg-rich-text-editor"
+    },
+    "homepage": "https://friendsofflarum.org",
+    "require": {
+        "php": "^8.1",
+        "flarum/core": "^1.8.3",
+        "flarum/markdown": "^1.2.0"
+    },
+    "authors": [
+        {
+            "name": "Alexander Skvortsov",
+            "email": "askvortsov@flarum.org",
+            "role": "Developer"
+        },
+        {
+            "name": "Hüseyin Filiz",
+            "email": "mysuperuser01@gmail.com",
+            "role": "Developer"
+        },
+        {
+            "name": "FoF Team",
+            "email": "team@friendsofflarum.org",
+            "role": "Maintainer"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "FoF\\RichText\\": "src/"
+        }
+    },
+    "replace": {
+        "askvortsov/flarum-rich-text": "*"
+    },
+    "funding": [
+        {
+            "type": "website",
+            "url": "https://opencollective.com/fof/donate"
+        }
+    ],
+    "extra": {
+        "flarum-extension": {
+            "title": "FoF Rich Text",
+            "category": "feature",
+            "icon": {
+                "name": "fas fa-pen-fancy",
+                "backgroundColor": "#e74c3c",
+                "color": "#fff"
+            }
+        },
+        "flarum-cli": {
+            "modules": {
+                "admin": true,
+                "forum": true,
+                "js": true,
+                "jsCommon": true,
+                "css": false,
+                "gitConf": true,
+                "githubActions": true,
+                "prettier": true,
+                "typescript": false,
+                "bundlewatch": false,
+                "backendTesting": false,
+                "editorConfig": true,
+                "styleci": true
+            }
+        }
+    }
+}
