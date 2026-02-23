@@ -2,60 +2,86 @@
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg) [![Latest Stable Version](https://img.shields.io/packagist/v/fof/rich-text.svg)](https://packagist.org/packages/fof/rich-text) [![Total Downloads](https://img.shields.io/packagist/dt/fof/rich-text.svg)](https://packagist.org/packages/fof/rich-text) [![OpenCollective](https://img.shields.io/badge/opencollective-fof-blue.svg)](https://opencollective.com/fof/donate)
 
-A [Flarum](http://flarum.org) extension. Fully integrated Rich Text Editor for Flarum.
+A [Flarum](http://flarum.org) extension. Fully integrated WYSIWYG Rich Text Editor for Flarum, powered by [Tiptap](https://tiptap.dev/) (built on [ProseMirror](https://prosemirror.net/)).
 
-![Screenshot](https://i.imgur.com/41pHhED.png)
+![Screenshot](https://i.ibb.co/tMSj6Dmh/image.png)
 
-### Installation
-
-Install manually with composer:
+## Installation
 
 ```sh
 composer require fof/rich-text:*
 ```
 
-### Updating
+## Updating
 
 ```sh
 composer update fof/rich-text
 ```
 
-### FAQ
+## FAQ
 
-#### Is it a bundled extension?
+### What does it support?
 
-No. This extension is published and maintained by the [Friends of Flarum](https://friendsofflarum.org) community. The editor driver is part of Flarum's public API, and the editor implementations are mostly pure JS, so it shouldn't experience issues with Flarum updates for the foreseeable future.
+By default, everything from the [s9e/TextFormatter Litedown syntax](https://s9etextformatter.readthedocs.io/Plugins/Litedown/Syntax/) except indented code blocks and underlined headers. The tables and checklists extensions add support for [PipeTables](https://s9etextformatter.readthedocs.io/Plugins/PipeTables/Syntax/) and [TaskLists](https://s9etextformatter.readthedocs.io/Plugins/TaskLists/Synopsis/).
 
-#### What does it support?
+BBCodes are not WYSIWYG'd, but their syntax characters won't be escaped so you can still use them.
 
-By default, everything from https://s9etextformatter.readthedocs.io/Plugins/Litedown/Syntax/ except indented codeblocks and lines under headers. The tables and checklists extensions add support for https://s9etextformatter.readthedocs.io/Plugins/PipeTables/Syntax/ (currently not for compact tables) and https://s9etextformatter.readthedocs.io/Plugins/TaskLists/Synopsis/.
+Custom syntax supported out of the box:
 
-BBCodes will not be WYSIWYD'ed. However, symbols used for them shouldn't be escaped so you should still be able to use them.
+- **Spoiler blocks** — `>! text`
+- **Inline spoilers** — `||text||`
+- **Math blocks** — `$$ ... $$`
+- **Inline math** — `$text$`
+- **Subscript** — `~text~`
+- **Superscript** — `^text^`
 
-#### What's it written in?
+### Does it work with mentions, emoji, and fof/upload?
 
-It's based on the excellent [ProseMirror](https://prosemirror.net/) editor framework.
+Yes. The extension implements Flarum's `EditorDriverInterface` and is fully compatible with `flarum/mentions`, `flarum/emoji`, and `fof/upload`.
 
-#### Is it extensible?
+### Can users opt out?
 
-Yes! The markdown tables and tasklists extensions are meant as a proof of concept of how flexible it is. However, ProseMirror is quite challenging to work with, so these kinds of extensions are quite advanced.
+Yes. Users can disable the rich text editor from their settings page. You can also enable the **Toggle Button** setting in the admin dashboard to show a toggle button directly inside the composer.
 
-If you're interested in extending it and are very familiar with JS, feel free to open an issue or discussion on our [GitHub repository](https://github.com/FriendsOfFlarum/rich-text).
+### What about bundle size?
 
-#### Does it work with mentions, emoji, and fof upload?
+Version 2.x ships the editor as a **lazy-loaded async chunk**. The Tiptap editor code (~520 KB minified, ~150 KB gzipped) is only downloaded when a user opens the composer. The main forum bundle contributed by this extension is under 13 KB.
 
-Yes.
+This is a significant improvement over 1.x, where ~350 KB was added to every page load.
 
-#### Can users opt out?
+### Is it extensible?
 
-Yes, on their settings page there's a preference. You can also enable a setting in the admin dashboard that will add a toggle directly to the editor.
+Yes. The extension exposes two main extension points for third-party developers:
 
-#### Are there any cons?
+**Add toolbar buttons:**
+```js
+import { extend } from 'flarum/common/extend';
 
-This extension has substantial bundle size, about 350kb minified (gzipped will be smaller). For most (especially nontechnical) communities this will be worth it, for others, it might not be. We are looking into code splitting opportunities to reduce the TTFB impact, but that is quite challenging and will likely take a while. Note that this is still considerably less than Flarum competitors.
+extend(fof.richText.components.TiptapMenu.prototype, 'items', function (items) {
+  items.add('myButton', MyButton.component({ editor: this.attrs.editor }), 10);
+});
+```
 
-### Links
+**Add Tiptap extensions to the editor:**
+```js
+import { extend } from 'flarum/common/extend';
+
+extend(fof.richText.tiptap.TiptapEditorDriver.prototype, 'buildExtensions', function (items) {
+  items.add('myExtension', MyTiptapExtension);
+});
+```
+
+### What's it built on?
+
+Version 2.x is built on [Tiptap 3](https://tiptap.dev/) (which runs [ProseMirror](https://prosemirror.net/) underneath). The markdown serialization layer uses a custom `prosemirror-markdown`-based parser and serializer, ensuring faithful roundtrip compatibility with s9e/TextFormatter's output.
+
+### Is it a bundled extension?
+
+No. This extension is published and maintained by the [Friends of Flarum](https://friendsofflarum.org) community.
+
+## Links
 
 - [Packagist](https://packagist.org/packages/fof/rich-text)
 - [GitHub](https://github.com/FriendsOfFlarum/rich-text)
-- [Discuss](https://discuss.flarum.org/d/38789-friendsofflarum-rich-text-wysiwyg)
+- [OpenCollective](https://opencollective.com/fof/donate)
+- [Discuss](https://discuss.flarum.org/d/21335-friendsofflarum-rich-text)
