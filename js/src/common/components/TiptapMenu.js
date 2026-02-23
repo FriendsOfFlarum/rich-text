@@ -1,5 +1,3 @@
-import { toggleBlockType, toggleWrap, wrapIn } from 'tiptap-commands';
-
 import Component from 'flarum/common/Component';
 import ItemList from 'flarum/common/utils/ItemList';
 
@@ -9,24 +7,23 @@ import NodeTypeDropdown from './NodeTypeDropdown';
 import InsertImageDropdown from './InsertImageDropdown';
 import InsertLinkDropdown from './InsertLinkDropdown';
 import ListButton from './ListButton';
-import insertHr from '../proseMirror/commands/insertHr';
 import HiddenItemsDropdown from './HiddenItemsDropdown';
 
-export default class ProseMirrorMenu extends Component {
+export default class TiptapMenu extends Component {
   oninit(vnode) {
     super.oninit(vnode);
 
     this.modifierKey = navigator.userAgent.match(/Macintosh/) ? '⌘' : 'ctrl';
   }
   view(vnode) {
-    if (!this.attrs.state) return '';
+    if (!this.attrs.editor) return '';
 
     return <div class="ProseMirrorMenu">{this.items().toArray()}</div>;
   }
 
   items() {
     const items = new ItemList();
-    const state = this.attrs.state;
+    const editor = this.attrs.editor;
     const modifierKey = this.modifierKey;
 
     items.add(
@@ -34,47 +31,47 @@ export default class ProseMirrorMenu extends Component {
       NodeTypeDropdown.component({
         type: 'text_type',
         tooltip: app.translator.trans('fof-rich-text.lib.composer.text_type_tooltip'),
-        state: state,
+        editor: editor,
         options: [
           {
             title: 'H1',
-            type: state.getSchema().nodes.heading,
+            name: 'heading',
             attrs: { level: 1 },
             tooltip: app.translator.trans('fof-rich-text.lib.composer.header_tooltip', { modifierKey, level: 1 }),
           },
           {
             title: 'H2',
-            type: state.getSchema().nodes.heading,
+            name: 'heading',
             attrs: { level: 2 },
             tooltip: app.translator.trans('fof-rich-text.lib.composer.header_tooltip', { modifierKey, level: 2 }),
           },
           {
             title: 'H3',
-            type: state.getSchema().nodes.heading,
+            name: 'heading',
             attrs: { level: 3 },
             tooltip: app.translator.trans('fof-rich-text.lib.composer.header_tooltip', { modifierKey, level: 3 }),
           },
           {
             title: 'H4',
-            type: state.getSchema().nodes.heading,
+            name: 'heading',
             attrs: { level: 4 },
             tooltip: app.translator.trans('fof-rich-text.lib.composer.header_tooltip', { modifierKey, level: 4 }),
           },
           {
             title: 'H5',
-            type: state.getSchema().nodes.heading,
+            name: 'heading',
             attrs: { level: 5 },
             tooltip: app.translator.trans('fof-rich-text.lib.composer.header_tooltip', { modifierKey, level: 5 }),
           },
           {
             title: 'H6',
-            type: state.getSchema().nodes.heading,
+            name: 'heading',
             attrs: { level: 6 },
             tooltip: app.translator.trans('fof-rich-text.lib.composer.header_tooltip', { modifierKey, level: 6 }),
           },
           {
             title: 'P',
-            type: state.getSchema().nodes.paragraph,
+            name: 'paragraph',
             tooltip: app.translator.trans('fof-rich-text.lib.composer.paragraph_tooltip', { modifierKey }),
           },
         ],
@@ -88,8 +85,8 @@ export default class ProseMirrorMenu extends Component {
         type: 'bold',
         icon: 'fas fa-bold',
         tooltip: app.translator.trans('fof-rich-text.lib.composer.bold_tooltip', { modifierKey }),
-        state: state,
-        mark: state.getSchema().marks.strong,
+        editor: editor,
+        mark: 'bold',
       }),
       90
     );
@@ -100,8 +97,8 @@ export default class ProseMirrorMenu extends Component {
         type: 'italic',
         icon: 'fas fa-italic',
         tooltip: app.translator.trans('fof-rich-text.lib.composer.italic_tooltip', { modifierKey }),
-        state: state,
-        mark: state.getSchema().marks.em,
+        editor: editor,
+        mark: 'italic',
       }),
       80
     );
@@ -112,8 +109,8 @@ export default class ProseMirrorMenu extends Component {
         type: 'code',
         icon: 'fas fa-code',
         tooltip: app.translator.trans('fof-rich-text.lib.composer.code_tooltip', { modifierKey }),
-        state: state,
-        mark: state.getSchema().marks.code,
+        editor: editor,
+        mark: 'code',
       }),
       70
     );
@@ -124,8 +121,8 @@ export default class ProseMirrorMenu extends Component {
         type: 'quote',
         icon: 'fas fa-quote-left',
         tooltip: app.translator.trans('fof-rich-text.lib.composer.quote_tooltip', { modifierKey }),
-        state: state,
-        command: wrapIn(state.getSchema().nodes.blockquote),
+        editor: editor,
+        command: (editor) => editor.chain().focus().toggleBlockquote().run(),
       }),
       60
     );
@@ -136,8 +133,7 @@ export default class ProseMirrorMenu extends Component {
         type: 'link',
         icon: 'fas fa-link',
         tooltip: app.translator.trans('fof-rich-text.lib.composer.link_tooltip'),
-        state: state,
-        mark: state.getSchema().marks.link,
+        editor: editor,
       }),
       50
     );
@@ -148,8 +144,7 @@ export default class ProseMirrorMenu extends Component {
         type: 'image',
         icon: 'fas fa-image',
         tooltip: app.translator.trans('fof-rich-text.lib.composer.image_tooltip'),
-        state: state,
-        node: state.getSchema().nodes.image,
+        editor: editor,
       }),
       40
     );
@@ -160,8 +155,8 @@ export default class ProseMirrorMenu extends Component {
         type: 'unordered_list',
         icon: 'fas fa-list-ul',
         tooltip: app.translator.trans('fof-rich-text.lib.composer.unordered_list_tooltip', { modifierKey }),
-        state: state,
-        listType: state.getSchema().nodes.bullet_list,
+        editor: editor,
+        listType: 'bulletList',
       }),
       30
     );
@@ -172,8 +167,8 @@ export default class ProseMirrorMenu extends Component {
         type: 'ordered_list',
         icon: 'fas fa-list-ol',
         tooltip: app.translator.trans('fof-rich-text.lib.composer.ordered_list_tooltip', { modifierKey }),
-        state: state,
-        listType: state.getSchema().nodes.ordered_list,
+        editor: editor,
+        listType: 'orderedList',
       }),
       20
     );
@@ -184,7 +179,7 @@ export default class ProseMirrorMenu extends Component {
         type: 'additional_items',
         icon: 'fas fa-plus',
         tooltip: app.translator.trans('fof-rich-text.lib.composer.additional_items_tooltip'),
-        state: state,
+        state: editor,
         buttons: this.hiddenItems().toArray(),
       })
     );
@@ -194,7 +189,7 @@ export default class ProseMirrorMenu extends Component {
 
   hiddenItems() {
     const items = new ItemList();
-    const state = this.attrs.state;
+    const editor = this.attrs.editor;
     const modifierKey = this.modifierKey;
 
     items.add(
@@ -203,8 +198,8 @@ export default class ProseMirrorMenu extends Component {
         type: 'strike',
         icon: 'fas fa-strikethrough',
         tooltip: app.translator.trans('fof-rich-text.lib.composer.strike_tooltip'),
-        state: state,
-        mark: state.getSchema().marks.strike,
+        editor: editor,
+        mark: 'strike',
       })
     );
 
@@ -214,8 +209,8 @@ export default class ProseMirrorMenu extends Component {
         type: 'sub',
         icon: 'fas fa-subscript',
         tooltip: app.translator.trans('fof-rich-text.lib.composer.sub_tooltip', { modifierKey }),
-        state: state,
-        mark: state.getSchema().marks.sub,
+        editor: editor,
+        mark: 'sub',
       })
     );
 
@@ -225,8 +220,8 @@ export default class ProseMirrorMenu extends Component {
         type: 'sup',
         icon: 'fas fa-superscript',
         tooltip: app.translator.trans('fof-rich-text.lib.composer.sup_tooltip', { modifierKey }),
-        state: state,
-        mark: state.getSchema().marks.sup,
+        editor: editor,
+        mark: 'sup',
       })
     );
 
@@ -236,8 +231,8 @@ export default class ProseMirrorMenu extends Component {
         type: 'spoiler_inline',
         icon: 'fas fa-eye-slash',
         tooltip: app.translator.trans('fof-rich-text.lib.composer.spoiler_inline_tooltip', { modifierKey }),
-        state: state,
-        mark: state.getSchema().marks.spoiler_inline,
+        editor: editor,
+        mark: 'spoiler_inline',
       })
     );
 
@@ -247,8 +242,8 @@ export default class ProseMirrorMenu extends Component {
         type: 'code_block',
         icon: 'fas fa-terminal',
         tooltip: app.translator.trans('fof-rich-text.lib.composer.code_block_tooltip', { modifierKey }),
-        state: state,
-        command: toggleBlockType(state.getSchema().nodes.code_block, state.getSchema().nodes.paragraph),
+        editor: editor,
+        command: (editor) => editor.chain().focus().toggleCodeBlock().run(),
       })
     );
 
@@ -258,8 +253,14 @@ export default class ProseMirrorMenu extends Component {
         type: 'spoiler_block',
         icon: 'fas fa-caret-square-right',
         tooltip: app.translator.trans('fof-rich-text.lib.composer.spoiler_block_tooltip', { modifierKey }),
-        state: state,
-        command: toggleWrap(state.getSchema().nodes.spoiler),
+        editor: editor,
+        command: (editor) => {
+          if (editor.isActive('spoiler')) {
+            editor.chain().focus().lift('spoiler').run();
+          } else {
+            editor.chain().focus().wrapIn('spoiler').run();
+          }
+        },
       })
     );
 
@@ -269,8 +270,8 @@ export default class ProseMirrorMenu extends Component {
         type: 'horizontal_rule',
         icon: 'fas fa-minus',
         tooltip: app.translator.trans('fof-rich-text.lib.composer.horizontal_rule_tooltip'),
-        state: state,
-        command: insertHr(state.getSchema().nodes.horizontal_rule),
+        editor: editor,
+        command: (editor) => editor.chain().focus().setHorizontalRule().run(),
       })
     );
 

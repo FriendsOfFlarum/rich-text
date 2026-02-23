@@ -1,11 +1,10 @@
 import { extend } from 'flarum/common/extend';
 import FieldSet from 'flarum/common/components/FieldSet';
 import Switch from 'flarum/common/components/Switch';
-import SettingsPage from 'flarum/forum/components/SettingsPage';
 import ItemList from 'flarum/common/utils/ItemList';
 
 export default function addPreferences() {
-  extend(SettingsPage.prototype, 'settingsItems', function (items) {
+  extend('flarum/forum/components/SettingsPage', 'settingsItems', function (items) {
     items.add(
       'composer',
       FieldSet.component(
@@ -18,7 +17,7 @@ export default function addPreferences() {
     );
   });
 
-  SettingsPage.prototype['composerItems'] = function () {
+  extend('flarum/forum/components/SettingsPage', 'composerItems', function () {
     const items = new ItemList();
 
     items.add(
@@ -60,5 +59,5 @@ export default function addPreferences() {
     );
 
     return items;
-  };
+  });
 }

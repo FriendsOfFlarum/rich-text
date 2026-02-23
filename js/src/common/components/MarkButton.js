@@ -1,12 +1,11 @@
-import { toggleMark } from 'tiptap-commands';
 import CommandButton from './CommandButton';
 
 export default class MarkButton extends CommandButton {
   static initAttrs(attrs) {
-    attrs.command = toggleMark(attrs.mark);
+    attrs.command = (editor) => editor.chain().focus().toggleMark(attrs.mark).run();
   }
 
-  onEditorUpdate() {
-    this.$().toggleClass('active', !!this.state.markActive(this.attrs.mark));
+  isActive() {
+    return !!this.attrs.editor?.isActive(this.attrs.mark);
   }
 }

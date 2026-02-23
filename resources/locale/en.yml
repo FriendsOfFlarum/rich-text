@@ -15,24 +15,24 @@ fof-rich-text:
         title_placeholder: Title (shows on hover)
         remove_button: Remove
       additional_items_tooltip: Additional Controls
-      bold_tooltip: Bold text <{modifierKey}-b>
-      code_tooltip: Inline code <{modifierKey}-`>
+      bold_tooltip: Bold text ({modifierKey}-b)
+      code_tooltip: Inline code ({modifierKey}-`)
       code_block_tooltip: Insert a code block
-      header_tooltip: Change to header {level} <shift-{modifierKey}-{level}>
+      header_tooltip: Change to header {level} ({modifierKey}-shift-{level})
       horizontal_rule_tooltip: Insert horizontal rule
       image_tooltip: Add an image
-      italic_tooltip: Italic text <{modifierKey}-i>
+      italic_tooltip: Italic text ({modifierKey}-i)
       link_tooltip: Add a link
-      ordered_list_tooltip: Numbered list <shift-{modifierKey}-9>
-      paragraph_tooltip: Change to paragraph <shift-{modifierKey}-0>
-      quote_tooltip: Insert a quote <{modifierKey}-q>
+      ordered_list_tooltip: Numbered list ({modifierKey}-shift-9)
+      paragraph_tooltip: Change to paragraph ({modifierKey}-shift-0)
+      quote_tooltip: Insert a quote ({modifierKey}-q)
       spoiler_block_tooltip: Block Spoiler/Dropdown
-      spoiler_inline_tooltip: Spoiler  <{modifierKey}-;>
-      strike_tooltip: Strikethrough <alt-shift-5>
-      sub_tooltip: Subscript <{modifierKey}-,>
-      sup_tooltip: Superscript <{modifierKey}-.>
+      spoiler_inline_tooltip: Spoiler ({modifierKey}-;)
+      strike_tooltip: Strikethrough (alt-shift-5)
+      sub_tooltip: Subscript ({modifierKey}-,)
+      sup_tooltip: Superscript ({modifierKey}-.)
       text_type_tooltip: Select Text Type
-      unordered_list_tooltip: Bulleted list <shift-{modifierKey}-8>
+      unordered_list_tooltip: Bulleted list ({modifierKey}-shift-8)
 
   forum:
     settings:

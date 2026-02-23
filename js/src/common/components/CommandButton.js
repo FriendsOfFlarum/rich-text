@@ -1,24 +1,26 @@
 import Component from 'flarum/common/Component';
 import Tooltip from 'flarum/common/components/Tooltip';
-import icon from 'flarum/common/helpers/icon';
+import Icon from 'flarum/common/components/Icon';
 import extractText from 'flarum/common/utils/extractText';
+import classList from 'flarum/common/utils/classList';
 
 export default class CommandButton extends Component {
-  oninit(vnode) {
-    super.oninit(vnode);
-
-    this.state = this.attrs.state;
-    this.state.addItem(this.attrs.type, this.attrs.command, this.onEditorUpdate.bind(this));
-  }
-
   view() {
     return (
       <Tooltip text={extractText(this.attrs.tooltip)}>
-        <button className="Button Button--icon Button--link CommandButton" onclick={this.click.bind(this)} onkeydown={this.keydown.bind(this)}>
-          {icon(this.attrs.icon)}
+        <button
+          className={classList('Button Button--icon Button--link CommandButton', { active: this.isActive() })}
+          onclick={this.click.bind(this)}
+          onkeydown={this.keydown.bind(this)}
+        >
+          <Icon name={this.attrs.icon} />
         </button>
       </Tooltip>
     );
+  }
+
+  isActive() {
+    return false;
   }
 
   keydown(e) {
@@ -29,14 +31,8 @@ export default class CommandButton extends Component {
 
   click(e) {
     e.preventDefault();
-    return this.state.run(this.attrs.type);
+    if (this.attrs.command) {
+      this.attrs.command(this.attrs.editor);
+    }
   }
-
-  title() {
-    let tooltip = app.translator.trans(`fof-rich-text.lib.composer.${this.attrs.type}_tooltip`);
-
-    return tooltip;
-  }
-
-  onEditorUpdate() {}
 }

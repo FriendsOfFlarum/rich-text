@@ -1,6 +1,6 @@
 // COPIED FROM https://github.com/StackExchange/Stacks-Editor/blob/main/src/shared/markdown-it/spoiler.ts
 
-import { isSpace } from 'markdown-it/lib/common/utils';
+import { isSpace } from 'markdown-it/lib/common/utils.mjs';
 
 // TODO unfortunately, we cannot reliably extend blockquote since it is hardcoded to search for `>` characters
 // In addition, we cannot just call "blockquote" inside spoiler, because it does a lookahead for `>` characters and leaves our `!`s behind, potentially causing parsing issues

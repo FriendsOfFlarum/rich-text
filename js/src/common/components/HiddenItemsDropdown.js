@@ -1,6 +1,6 @@
 import Dropdown from 'flarum/common/components/Dropdown';
+import Icon from 'flarum/common/components/Icon';
 import Tooltip from 'flarum/common/components/Tooltip';
-import icon from 'flarum/common/helpers/icon';
 import SafariModalHack from './SafariModalHack';
 
 export default class HiddenItemsDropdown extends Dropdown {
@@ -32,10 +32,27 @@ export default class HiddenItemsDropdown extends Dropdown {
     });
   }
 
+  getButton(children) {
+    return (
+      <button
+        type="button"
+        className={'Dropdown-toggle ' + this.attrs.buttonClassName}
+        aria-haspopup="menu"
+        data-toggle="dropdown"
+        onclick={this.attrs.onclick}
+        {...this.attrs.buttonAttrs}
+      >
+        {this.getButtonContent(children)}
+      </button>
+    );
+  }
+
   getButtonContent(children) {
     return (
       <Tooltip text={this.attrs.tooltip}>
-        <span>{icon(this.attrs.icon)}</span>
+        <span>
+          <Icon name={this.attrs.icon} className="Button-icon" />
+        </span>
       </Tooltip>
     );
   }

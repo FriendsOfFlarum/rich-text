@@ -1,8 +1,4 @@
-export * from './components';
-export * from './proseMirror';
-export * from './states';
-export { InputRule } from 'prosemirror-inputrules';
-export { keymap } from 'prosemirror-keymap';
-export { liftListItem, splitListItem } from 'tiptap-commands';
-export { wrapInList } from 'prosemirror-schema-list';
-export { Plugin, Selection } from 'prosemirror-state';
+// Barrel re-exports removed to enable webpack code splitting.
+// Tiptap editor modules are lazy-loaded via import() in applyEditor.js.
+// Individual modules are registered with flarum.reg by autoExportLoader
+// and accessible to other extensions via ext:fof/rich-text/common/...

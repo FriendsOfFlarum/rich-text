@@ -17,10 +17,13 @@ use Flarum\Extend;
 return [
     (new Extend\Frontend('forum'))
         ->js(__DIR__.'/js/dist/forum.js')
-        ->css(__DIR__.'/resources/less/forum.less'),
+        ->css(__DIR__.'/resources/less/forum.less')
+        ->jsDirectory(__DIR__.'/js/dist'),
     (new Extend\Frontend('admin'))
         ->js(__DIR__.'/js/dist/admin.js')
-        ->css(__DIR__.'/resources/less/admin.less'),
+        ->jsDirectory(__DIR__.'/js/dist'),
+    (new Extend\Frontend('common'))
+        ->jsDirectory(__DIR__.'/js/dist/common'),
     new Extend\Locales(__DIR__.'/resources/locale'),
 
     (new Extend\User())->registerPreference('useRichTextEditor', 'boolval', true),

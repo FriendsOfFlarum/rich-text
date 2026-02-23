@@ -1,4 +1,4 @@
-import { defaultMarkdownSerializer, MarkdownSerializer, MarkdownSerializerState } from 'prosemirror-markdown';
+import { defaultMarkdownSerializer, MarkdownSerializer, MarkdownSerializerState } from '@tiptap/pm/markdown';
 
 /**
  * COPIED FROM https://github.com/StackExchange/Stacks-Editor/blob/main/src/rich-text/markdown-serializer.ts
@@ -37,6 +37,32 @@ MarkdownSerializerState.prototype.esc = function (str, startOfLine) {
   return str;
 };
 
+// Remap defaultMarkdownSerializer.nodes from old prosemirror-markdown keys to Tiptap v3 camelCase keys
+const oldNodes = defaultMarkdownSerializer.nodes;
+const remappedNodes = {};
+const nodeNameMap = {
+  bullet_list: 'bulletList',
+  ordered_list: 'orderedList',
+  list_item: 'listItem',
+  code_block: 'codeBlock',
+  horizontal_rule: 'horizontalRule',
+  hard_break: 'hardBreak',
+};
+for (const [key, value] of Object.entries(oldNodes)) {
+  remappedNodes[nodeNameMap[key] || key] = value;
+}
+
+// Remap defaultMarkdownSerializer.marks from old prosemirror-markdown keys to Tiptap v3 camelCase keys
+const oldMarks = defaultMarkdownSerializer.marks;
+const remappedMarks = {};
+const markNameMap = {
+  em: 'italic',
+  strong: 'bold',
+};
+for (const [key, value] of Object.entries(oldMarks)) {
+  remappedMarks[markNameMap[key] || key] = value;
+}
+
 export default class MarkdownSerializerBuilder {
   constructor(schema) {
     this.schema = schema;
@@ -44,7 +70,18 @@ export default class MarkdownSerializerBuilder {
 
   buildNodes() {
     return {
-      ...defaultMarkdownSerializer.nodes,
+      ...remappedNodes,
+
+      // Fix orderedList: Tiptap v3 uses `start` attr instead of `order`
+      orderedList(state, node) {
+        let start = node.attrs.start || 1;
+        let maxW = String(start + node.childCount - 1).length;
+        let space = state.repeat(' ', maxW + 2);
+        state.renderList(node, space, (i) => {
+          let nStr = String(start + i);
+          return state.repeat(' ', maxW - nStr.length) + nStr + '. ';
+        });
+      },
 
       spoiler(state, node) {
         state.wrapBlock('>! ', null, node, () => state.renderContent(node));
@@ -63,12 +100,12 @@ export default class MarkdownSerializerBuilder {
         if (node.content.size === 0) {
           state.write('\n');
         } else {
-          defaultMarkdownSerializer.nodes.paragraph(state, node);
+          remappedNodes.paragraph(state, node);
         }
       },
 
       // Override this to put in just a whiteline, since Litedown doesn't like line-ending slashes.
-      hard_break(state, node, parent, index) {
+      hardBreak(state, node, parent, index) {
         for (let i = index + 1; i < parent.childCount; i++)
           if (parent.child(i).type != node.type) {
             state.write('\n');
@@ -80,7 +117,7 @@ export default class MarkdownSerializerBuilder {
 
   buildMarks() {
     return {
-      ...defaultMarkdownSerializer.marks,
+      ...remappedMarks,
 
       spoiler_inline: genMarkupAwareMarkConfig({
         open: '>!',

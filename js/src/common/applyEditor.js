@@ -5,16 +5,36 @@ import TextEditor from 'flarum/common/components/TextEditor';
 import Tooltip from 'flarum/common/components/Tooltip';
 import classList from 'flarum/common/utils/classList';
 
-import ProseMirrorEditorDriver from './proseMirror/ProseMirrorEditorDriver';
-import ProseMirrorMenu from './components/ProseMirrorMenu';
-import MenuState from './states/MenuState';
-
 export default function applyEditor() {
+  // Lazy load the Tiptap editor bundle when rich text is enabled
+  extend(TextEditor.prototype, 'oninit', function () {
+    if (!app.session.user || !app.session.user.preferences().useRichTextEditor) return;
+
+    this._loaders = this._loaders || [];
+    this._loaders.push(() =>
+      Promise.all([import('./tiptap/TiptapEditorDriver'), import('./components/TiptapMenu')]).then(([driverModule, menuModule]) => {
+        this._TiptapEditorDriver = driverModule.default;
+        this._TiptapMenu = menuModule.default;
+      })
+    );
+  });
+
   extend(TextEditor.prototype, 'controlItems', function (items) {
     if (!app.forum.attribute('toggleRichTextEditorButton')) return;
 
     const buttonOnClick = () => {
-      app.session.user.savePreferences({ useRichTextEditor: !app.session.user.preferences().useRichTextEditor }).then(() => {
+      const newValue = !app.session.user.preferences().useRichTextEditor;
+
+      // When switching to rich text, ensure modules are loaded first
+      const loadModules =
+        newValue && !this._TiptapEditorDriver
+          ? Promise.all([import('./tiptap/TiptapEditorDriver'), import('./components/TiptapMenu')]).then(([driverModule, menuModule]) => {
+              this._TiptapEditorDriver = driverModule.default;
+              this._TiptapMenu = menuModule.default;
+            })
+          : Promise.resolve();
+
+      Promise.all([app.session.user.savePreferences({ useRichTextEditor: newValue }), loadModules]).then(() => {
         app.composer.editor.destroy();
         this.attrs.composer.editor = this.buildEditor(this.$('.TextEditor-editorContainer')[0]);
         m.redraw.sync();
@@ -37,26 +57,30 @@ export default function applyEditor() {
 
   extend(TextEditor.prototype, 'toolbarItems', function (items) {
     if (!app.session.user.preferences().useRichTextEditor) return;
+    if (!this._TiptapMenu || !this.tiptapEditor) return;
+
+    const TiptapMenu = this._TiptapMenu;
 
     items.remove('markdown');
 
-    items.add('prosemirror-menu', <ProseMirrorMenu state={this.menuState} />, 100);
+    items.add('richText', <TiptapMenu editor={this.tiptapEditor} />, 100);
   });
 
   extend(TextEditor.prototype, 'buildEditorParams', function (items) {
     if (!app.session.user.preferences().useRichTextEditor) return;
 
-    items.menuState = this.menuState = new MenuState();
     items.classNames.push('Post-body');
     items.escape = () => app.composer.close();
-    m.redraw();
   });
 
   override(TextEditor.prototype, 'buildEditor', function (original, dom) {
-    if (app.session.user.preferences().useRichTextEditor) {
-      return new ProseMirrorEditorDriver(dom, this.buildEditorParams());
+    if (app.session.user.preferences().useRichTextEditor && this._TiptapEditorDriver) {
+      const driver = new this._TiptapEditorDriver(dom, this.buildEditorParams());
+      this.tiptapEditor = driver.editor;
+      return driver;
     }
 
+    this.tiptapEditor = null;
     return original(dom);
   });
 }
