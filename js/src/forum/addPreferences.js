@@ -5,22 +5,9 @@ import ItemList from 'flarum/common/utils/ItemList';
 
 export default function addPreferences() {
   extend('flarum/forum/components/SettingsPage', 'settingsItems', function (items) {
-    items.add(
-      'composer',
-      FieldSet.component(
-        {
-          label: app.translator.trans('fof-rich-text.forum.settings.composer_heading'),
-          className: 'Settings-composer',
-        },
-        this.composerItems().toArray()
-      )
-    );
-  });
+    const composerItems = new ItemList();
 
-  extend('flarum/forum/components/SettingsPage', 'composerItems', function () {
-    const items = new ItemList();
-
-    items.add(
+    composerItems.add(
       'useRichTextEditor',
       Switch.component(
         {
@@ -39,7 +26,7 @@ export default function addPreferences() {
       )
     );
 
-    items.add(
+    composerItems.add(
       'richTextCompactParagraphs',
       Switch.component(
         {
@@ -58,6 +45,15 @@ export default function addPreferences() {
       )
     );
 
-    return items;
+    items.add(
+      'composer',
+      FieldSet.component(
+        {
+          label: app.translator.trans('fof-rich-text.forum.settings.composer_heading'),
+          className: 'Settings-composer',
+        },
+        composerItems.toArray()
+      )
+    );
   });
 }
