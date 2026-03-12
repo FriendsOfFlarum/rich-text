@@ -104,6 +104,18 @@ export default class TiptapMenu extends Component {
     );
 
     items.add(
+      'strike',
+      MarkButton.component({
+        type: 'strike',
+        icon: 'fas fa-strikethrough',
+        tooltip: app.translator.trans('fof-rich-text.lib.composer.strike_tooltip'),
+        editor: editor,
+        mark: 'strike',
+      }),
+      75
+    );
+
+    items.add(
       'code',
       MarkButton.component({
         type: 'code',
@@ -125,6 +137,18 @@ export default class TiptapMenu extends Component {
         command: (editor) => editor.chain().focus().toggleBlockquote().run(),
       }),
       60
+    );
+
+    items.add(
+      'code_block',
+      CommandButton.component({
+        type: 'code_block',
+        icon: 'fas fa-terminal',
+        tooltip: app.translator.trans('fof-rich-text.lib.composer.code_block_tooltip', { modifierKey }),
+        editor: editor,
+        command: (editor) => editor.chain().focus().toggleCodeBlock().run(),
+      }),
+      53
     );
 
     items.add(
@@ -193,17 +217,6 @@ export default class TiptapMenu extends Component {
     const modifierKey = this.modifierKey;
 
     items.add(
-      'strike',
-      MarkButton.component({
-        type: 'strike',
-        icon: 'fas fa-strikethrough',
-        tooltip: app.translator.trans('fof-rich-text.lib.composer.strike_tooltip'),
-        editor: editor,
-        mark: 'strike',
-      })
-    );
-
-    items.add(
       'sub',
       MarkButton.component({
         type: 'sub',
@@ -233,17 +246,6 @@ export default class TiptapMenu extends Component {
         tooltip: app.translator.trans('fof-rich-text.lib.composer.spoiler_inline_tooltip', { modifierKey }),
         editor: editor,
         mark: 'spoiler_inline',
-      })
-    );
-
-    items.add(
-      'code_block',
-      CommandButton.component({
-        type: 'code_block',
-        icon: 'fas fa-terminal',
-        tooltip: app.translator.trans('fof-rich-text.lib.composer.code_block_tooltip', { modifierKey }),
-        editor: editor,
-        command: (editor) => editor.chain().focus().toggleCodeBlock().run(),
       })
     );
 
