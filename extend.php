@@ -30,5 +30,6 @@ return [
     (new Extend\User())->registerPreference('richTextCompactParagraphs', 'boolval', false),
 
     (new Extend\Settings())
-        ->serializeToForum('toggleRichTextEditorButton', 'fof-rich-text.toggle_on_editor', 'boolval', false),
+        ->serializeToForum('toggleRichTextEditorButton', 'fof-rich-text.toggle_on_editor', 'boolval', false)
+        ->serializeToForum('richTextForceCompactParagraphs', 'fof-rich-text.force_compact_paragraphs', 'boolval', false),
 ];
