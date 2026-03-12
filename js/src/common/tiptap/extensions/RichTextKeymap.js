@@ -19,7 +19,8 @@ export const DropdownYield = Extension.create({
       Enter: () => {
         const emojiDropdown = $('.EmojiDropdown:visible');
         const mentionsDropdown = $('.MentionsDropdown:visible');
-        if (emojiDropdown[0] || mentionsDropdown[0]) return true;
+        const formDropdown = $('.FormDropdown:visible');
+        if (emojiDropdown[0] || mentionsDropdown[0] || formDropdown[0]) return true;
         return false;
       },
     };
