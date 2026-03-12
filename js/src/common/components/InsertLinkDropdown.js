@@ -12,10 +12,30 @@ export default class InsertLinkDropdown extends FormDropdown {
     this.title = Stream('');
     this.active = false;
     this.selectionEmpty = true;
+    this.isOpen = false;
+  }
+
+  oncreate(vnode) {
+    super.oncreate(vnode);
+
+    this.$().on('shown.bs.dropdown', () => {
+      this.isOpen = true;
+    });
+    this.$().on('hidden.bs.dropdown', () => {
+      this.isOpen = false;
+      // Reset streams when dropdown closes (if not editing an existing link)
+      if (!this.active) {
+        this.text('');
+        this.href('');
+        this.title('');
+      }
+    });
   }
 
   onupdate(vnode) {
     super.onupdate(vnode);
+
+    if (this.isOpen) return;
 
     const editor = this.attrs.editor;
     if (!editor) return;
