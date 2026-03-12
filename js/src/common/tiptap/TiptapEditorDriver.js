@@ -148,8 +148,8 @@ export default class TiptapEditorDriver {
     items.add(
       'compactParagraphs',
       CompactParagraphs.configure({
-        enabled: app.forum.attribute('richTextForceCompactParagraphs') ||
-          (app.session.user && app.session.user.preferences().richTextCompactParagraphs),
+        enabled:
+          app.forum.attribute('richTextForceCompactParagraphs') || (app.session.user && app.session.user.preferences().richTextCompactParagraphs),
       })
     );
 
