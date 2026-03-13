@@ -15,6 +15,7 @@ export default class TiptapMenu extends Component {
 
     this.modifierKey = navigator.userAgent.match(/Macintosh/) ? '⌘' : 'ctrl';
   }
+
   view(vnode) {
     if (!this.attrs.editor) return '';
 
@@ -104,15 +105,15 @@ export default class TiptapMenu extends Component {
     );
 
     items.add(
-      'code',
+      'strike',
       MarkButton.component({
-        type: 'code',
-        icon: 'fas fa-code',
-        tooltip: app.translator.trans('fof-rich-text.lib.composer.code_tooltip', { modifierKey }),
+        type: 'strike',
+        icon: 'fas fa-strikethrough',
+        tooltip: app.translator.trans('fof-rich-text.lib.composer.strike_tooltip'),
         editor: editor,
-        mark: 'code',
+        mark: 'strike',
       }),
-      70
+      75
     );
 
     items.add(
@@ -123,6 +124,30 @@ export default class TiptapMenu extends Component {
         tooltip: app.translator.trans('fof-rich-text.lib.composer.quote_tooltip', { modifierKey }),
         editor: editor,
         command: (editor) => editor.chain().focus().toggleBlockquote().run(),
+      }),
+      70
+    );
+
+    items.add(
+      'spoiler_inline',
+      MarkButton.component({
+        type: 'spoiler_inline',
+        icon: 'fas fa-exclamation-triangle',
+        tooltip: app.translator.trans('fof-rich-text.lib.composer.spoiler_inline_tooltip', { modifierKey }),
+        editor: editor,
+        mark: 'spoiler_inline',
+      }),
+      65
+    );
+
+    items.add(
+      'code_block',
+      CommandButton.component({
+        type: 'code_block',
+        icon: 'fas fa-code',
+        tooltip: app.translator.trans('fof-rich-text.lib.composer.code_block_tooltip', { modifierKey }),
+        editor: editor,
+        command: (editor) => editor.chain().focus().toggleCodeBlock().run(),
       }),
       60
     );
@@ -193,13 +218,13 @@ export default class TiptapMenu extends Component {
     const modifierKey = this.modifierKey;
 
     items.add(
-      'strike',
+      'code',
       MarkButton.component({
-        type: 'strike',
-        icon: 'fas fa-strikethrough',
-        tooltip: app.translator.trans('fof-rich-text.lib.composer.strike_tooltip'),
+        type: 'code',
+        icon: 'fas fa-terminal',
+        tooltip: app.translator.trans('fof-rich-text.lib.composer.code_tooltip', { modifierKey }),
         editor: editor,
-        mark: 'strike',
+        mark: 'code',
       })
     );
 
@@ -222,28 +247,6 @@ export default class TiptapMenu extends Component {
         tooltip: app.translator.trans('fof-rich-text.lib.composer.sup_tooltip', { modifierKey }),
         editor: editor,
         mark: 'sup',
-      })
-    );
-
-    items.add(
-      'spoiler_inline',
-      MarkButton.component({
-        type: 'spoiler_inline',
-        icon: 'fas fa-eye-slash',
-        tooltip: app.translator.trans('fof-rich-text.lib.composer.spoiler_inline_tooltip', { modifierKey }),
-        editor: editor,
-        mark: 'spoiler_inline',
-      })
-    );
-
-    items.add(
-      'code_block',
-      CommandButton.component({
-        type: 'code_block',
-        icon: 'fas fa-terminal',
-        tooltip: app.translator.trans('fof-rich-text.lib.composer.code_block_tooltip', { modifierKey }),
-        editor: editor,
-        command: (editor) => editor.chain().focus().toggleCodeBlock().run(),
       })
     );
 

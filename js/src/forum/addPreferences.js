@@ -26,24 +26,26 @@ export default function addPreferences() {
       )
     );
 
-    composerItems.add(
-      'richTextCompactParagraphs',
-      Switch.component(
-        {
-          state: this.user.preferences().richTextCompactParagraphs,
-          onchange: (value) => {
-            this.richTextCompactParagraphsLoading = true;
+    if (!app.forum.attribute('richTextForceCompactParagraphs')) {
+      composerItems.add(
+        'richTextCompactParagraphs',
+        Switch.component(
+          {
+            state: this.user.preferences().richTextCompactParagraphs,
+            onchange: (value) => {
+              this.richTextCompactParagraphsLoading = true;
 
-            this.user.savePreferences({ richTextCompactParagraphs: value }).then(() => {
-              this.richTextCompactParagraphsLoading = false;
-              m.redraw();
-            });
+              this.user.savePreferences({ richTextCompactParagraphs: value }).then(() => {
+                this.richTextCompactParagraphsLoading = false;
+                m.redraw();
+              });
+            },
+            loading: this.richTextCompactParagraphsLoading,
           },
-          loading: this.richTextCompactParagraphsLoading,
-        },
-        app.translator.trans('fof-rich-text.forum.settings.rich_text_compact_paragraphs_label')
-      )
-    );
+          app.translator.trans('fof-rich-text.forum.settings.rich_text_compact_paragraphs_label')
+        )
+      );
+    }
 
     items.add(
       'composer',
