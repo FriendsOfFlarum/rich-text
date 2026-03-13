@@ -23,12 +23,6 @@ export default class InsertLinkDropdown extends FormDropdown {
     });
     this.$().on('hidden.bs.dropdown', () => {
       this.isOpen = false;
-      // Reset streams when dropdown closes (if not editing an existing link)
-      if (!this.active) {
-        this.text('');
-        this.href('');
-        this.title('');
-      }
     });
   }
 
@@ -123,12 +117,17 @@ export default class InsertLinkDropdown extends FormDropdown {
           text: this.text(),
           marks: [{ type: 'link', attrs: linkAttrs }],
         })
+        .unsetMark('link')
+        .insertContent(' ')
         .run();
-
-      this.text('');
     } else {
       editor.chain().focus().setLink(linkAttrs).run();
     }
+
+    // Reset streams after insert
+    this.text('');
+    this.href('');
+    this.title('');
   }
 
   remove(e) {
