@@ -17,7 +17,7 @@ export default class NodeTypeDropdown extends Dropdown {
     super.oncreate(vnode);
 
     this.$().on('click', (e) => {
-      if ($('.App').is('.mobile-safari')) {
+      if (app.screen() === 'phone') {
         app.modal.show(SafariModalHack, {
           title: this.attrs.tooltip,
           vnodeContent: this.getNodeTypeButtons(),
