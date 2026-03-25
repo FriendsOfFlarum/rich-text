@@ -14,7 +14,7 @@ import { MathInline } from './extensions/MathInline';
 import { Subscript } from './extensions/Subscript';
 import { Superscript } from './extensions/Superscript';
 import { DisableDataUriPaste } from './extensions/DisableDataUriPaste';
-import { RichTextKeymap, DropdownYield, CompactParagraphs, LinkExitOnPaste } from './extensions/RichTextKeymap';
+import { RichTextKeymap, CompactParagraphs, LinkExitOnPaste } from './extensions/RichTextKeymap';
 
 /**
  * Custom extension that wires Flarum's Mod-Enter (submit) and Escape (close) shortcuts.
@@ -147,7 +147,6 @@ export default class TiptapEditorDriver {
     items.add('superscript', Superscript);
     items.add('disableDataUriPaste', DisableDataUriPaste);
     items.add('richTextKeymap', RichTextKeymap);
-    items.add('dropdownYield', DropdownYield);
     items.add('linkExitOnPaste', LinkExitOnPaste);
 
     items.add(
