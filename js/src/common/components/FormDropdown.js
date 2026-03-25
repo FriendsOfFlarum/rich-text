@@ -20,7 +20,7 @@ export default class FormDropdown extends Dropdown {
     super.oncreate(vnode);
 
     this.$().on('click', (e) => {
-      if ($('.App').is('.mobile-safari')) {
+      if (app.screen() === 'phone') {
         // Mobile Safari doesn't support fixed items
         // So, we wrap them in a modal.
         app.modal.show(SafariModalHack, {
