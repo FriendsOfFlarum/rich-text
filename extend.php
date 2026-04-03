@@ -26,7 +26,7 @@ return [
 
     (new Extend\Frontend('common'))
         ->jsDirectory(__DIR__.'/js/dist/common'),
-        
+
     new Extend\Locales(__DIR__.'/resources/locale'),
 
     (new Extend\User())
