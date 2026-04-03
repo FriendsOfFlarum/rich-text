@@ -1,4 +1,5 @@
 import { Editor } from '@tiptap/core';
+import './tiptap';
 import ItemList from 'flarum/common/utils/ItemList';
 import { MarkdownParserBuilder, MarkdownSerializerBuilder } from './markdown';
 import type EditorDriverInterface from 'flarum/common/utils/EditorDriverInterface';
