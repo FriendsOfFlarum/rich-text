@@ -75,8 +75,19 @@ export default class MarkdownSerializerBuilder {
     return {
       ...remappedNodes,
 
-      // Fix orderedList: Tiptap v3 uses `start` attr instead of `order`
+      // Tiptap v3 BulletList has no `tight` attr; force tight serialization so
+      // items are not separated by blank lines in the markdown output.
+      bulletList(state: MarkdownSerializerState, node: any) {
+        const prevTight = (state as any).options.tightLists;
+        (state as any).options.tightLists = true;
+        remappedNodes.bulletList(state, node);
+        (state as any).options.tightLists = prevTight;
+      },
+
+      // Fix orderedList: Tiptap v3 uses `start` attr instead of `order`; also force tight.
       orderedList(state: MarkdownSerializerState, node: any) {
+        const prevTight = (state as any).options.tightLists;
+        (state as any).options.tightLists = true;
         let start = node.attrs.start || 1;
         let maxW = String(start + node.childCount - 1).length;
         let space = state.repeat(' ', maxW + 2);
@@ -84,6 +95,7 @@ export default class MarkdownSerializerBuilder {
           let nStr = String(start + i);
           return state.repeat(' ', maxW - nStr.length) + nStr + '. ';
         });
+        (state as any).options.tightLists = prevTight;
       },
 
       spoiler(state: MarkdownSerializerState, node: any) {
