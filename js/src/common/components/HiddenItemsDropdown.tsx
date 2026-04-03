@@ -1,20 +1,30 @@
-import Dropdown from 'flarum/common/components/Dropdown';
+import app from 'flarum/common/app';
+import Dropdown, { IDropdownAttrs } from 'flarum/common/components/Dropdown';
 import Icon from 'flarum/common/components/Icon';
 import Tooltip from 'flarum/common/components/Tooltip';
 import SafariModalHack from './SafariModalHack';
+import type Mithril from 'mithril';
+import type { Editor } from '@tiptap/core';
 
-export default class HiddenItemsDropdown extends Dropdown {
-  static initAttrs(attrs) {
+export interface IHiddenItemsDropdownAttrs extends IDropdownAttrs {
+  tooltip: string;
+  icon: string;
+  state?: Editor;
+  buttons: Mithril.Children[];
+  onclick?: () => void;
+  buttonAttrs?: Record<string, string>;
+}
+
+export default class HiddenItemsDropdown extends Dropdown<IHiddenItemsDropdownAttrs> {
+  static initAttrs(attrs: IHiddenItemsDropdownAttrs) {
     attrs.buttonClassName = 'Button Button--icon Button--link Button--menuDropdown';
   }
 
-  oninit(vnode) {
+  oninit(vnode: Mithril.Vnode<IHiddenItemsDropdownAttrs, this>) {
     super.oninit(vnode);
-
-    this.state = this.attrs.state;
   }
 
-  oncreate(vnode) {
+  oncreate(vnode: Mithril.VnodeDOM<IHiddenItemsDropdownAttrs, this>) {
     super.oncreate(vnode);
 
     this.$().on('click', (e) => {
@@ -32,7 +42,7 @@ export default class HiddenItemsDropdown extends Dropdown {
     });
   }
 
-  getButton(children) {
+  getButton(children: Mithril.ChildArray) {
     return (
       <button
         type="button"
@@ -47,7 +57,7 @@ export default class HiddenItemsDropdown extends Dropdown {
     );
   }
 
-  getButtonContent(children) {
+  getButtonContent(_children: Mithril.ChildArray) {
     return (
       <Tooltip text={this.attrs.tooltip}>
         <span>
@@ -57,7 +67,7 @@ export default class HiddenItemsDropdown extends Dropdown {
     );
   }
 
-  getMenu(items) {
+  getMenu(_items: Mithril.Vnode[]) {
     return <ul className={'Dropdown-menu dropdown-menu HiddenItemsDropdownMenu'}>{this.attrs.buttons}</ul>;
   }
 }

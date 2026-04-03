@@ -1,5 +1,6 @@
 import { Extension } from '@tiptap/core';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
+import type { Editor } from '@tiptap/core';
 
 export const RichTextKeymap = Extension.create({
   name: 'richTextKeymap',
@@ -7,7 +8,7 @@ export const RichTextKeymap = Extension.create({
   addKeyboardShortcuts() {
     return {
       'Alt-Shift-5': () => this.editor.commands.toggleStrike(),
-      Space: ({ editor }) => {
+      Space: ({ editor }: { editor: Editor }) => {
         const { state } = editor;
         const { $from } = state.selection;
         const linkMark = state.schema.marks.link;
@@ -37,10 +38,10 @@ export const CompactParagraphs = Extension.create({
   },
 
   addKeyboardShortcuts() {
-    if (!this.options.enabled) return {};
+    if (!this.options.enabled) return {} as Record<string, any>;
 
     return {
-      Enter: ({ editor }) => {
+      Enter: ({ editor }: { editor: Editor }) => {
         const { state } = editor;
         const { $head, $anchor } = state.selection;
 
@@ -75,7 +76,7 @@ export const LinkExitOnPaste = Extension.create({
       new Plugin({
         key: new PluginKey('linkExitOnPaste'),
         props: {
-          handlePaste(view, event) {
+          handlePaste(_view: any, _event: any) {
             setTimeout(() => {
               const { state } = editor;
               const { $from } = state.selection;

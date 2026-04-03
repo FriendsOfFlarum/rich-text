@@ -1,22 +1,31 @@
+import app from 'flarum/common/app';
 import Button from 'flarum/common/components/Button';
-import Dropdown from 'flarum/common/components/Dropdown';
+import Dropdown, { IDropdownAttrs } from 'flarum/common/components/Dropdown';
 import Icon from 'flarum/common/components/Icon';
 import Tooltip from 'flarum/common/components/Tooltip';
 import ItemList from 'flarum/common/utils/ItemList';
 import SafariModalHack from './SafariModalHack';
+import type Mithril from 'mithril';
+import type { Editor } from '@tiptap/core';
 
-export default class FormDropdown extends Dropdown {
-  static initAttrs(attrs) {
+export interface IFormDropdownAttrs extends IDropdownAttrs {
+  tooltip: string;
+  icon: string;
+  state?: Editor;
+  onclick?: () => void;
+  buttonAttrs?: Record<string, string>;
+}
+
+export default class FormDropdown<CustomAttrs extends IFormDropdownAttrs = IFormDropdownAttrs> extends Dropdown<CustomAttrs> {
+  static initAttrs(attrs: IFormDropdownAttrs) {
     attrs.buttonClassName = 'Button Button--icon Button--link Button--menuDropdown';
   }
 
-  oninit(vnode) {
+  oninit(vnode: Mithril.Vnode<CustomAttrs, this>) {
     super.oninit(vnode);
-
-    this.state = this.attrs.state;
   }
 
-  oncreate(vnode) {
+  oncreate(vnode: Mithril.VnodeDOM<CustomAttrs, this>) {
     super.oncreate(vnode);
 
     this.$().on('click', (e) => {
@@ -37,7 +46,7 @@ export default class FormDropdown extends Dropdown {
     });
   }
 
-  getButton(children) {
+  getButton(children: Mithril.ChildArray) {
     return (
       <button
         type="button"
@@ -52,7 +61,7 @@ export default class FormDropdown extends Dropdown {
     );
   }
 
-  getButtonContent(children) {
+  getButtonContent(_children: Mithril.ChildArray) {
     return (
       <Tooltip text={this.attrs.tooltip}>
         <span>
@@ -62,7 +71,7 @@ export default class FormDropdown extends Dropdown {
     );
   }
 
-  getMenu(items) {
+  getMenu(_items: Mithril.Vnode[]) {
     return (
       <ul className={'Dropdown-menu dropdown-menu FormDropdown'}>
         <form className="Form" onsubmit={this.onsubmit.bind(this)}>
@@ -72,8 +81,8 @@ export default class FormDropdown extends Dropdown {
     );
   }
 
-  fields() {
-    const items = new ItemList();
+  fields(): ItemList<Mithril.Children> {
+    const items = new ItemList<Mithril.Children>();
 
     items.add(
       'insert',
@@ -85,14 +94,14 @@ export default class FormDropdown extends Dropdown {
     return items;
   }
 
-  onsubmit(e) {
+  onsubmit(e: SubmitEvent) {
     // Here for the safari workaround
     app.modal.close();
     e.preventDefault();
     $('body').trigger('click');
     this.insert(e);
-    app.composer.editor.focus();
+    (app as any).composer.editor?.focus();
   }
 
-  insert(e) {}
+  insert(_e: SubmitEvent) {}
 }

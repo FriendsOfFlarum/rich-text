@@ -1,9 +1,19 @@
+import app from 'flarum/common/app';
 import extractText from 'flarum/common/utils/extractText';
 import Stream from 'flarum/common/utils/Stream';
-import FormDropdown from './FormDropdown';
+import FormDropdown, { IFormDropdownAttrs } from './FormDropdown';
+import type Mithril from 'mithril';
+import type { Editor } from '@tiptap/core';
 
-export default class InsertImageDropdown extends FormDropdown {
-  oninit(vnode) {
+export interface IInsertImageDropdownAttrs extends IFormDropdownAttrs {
+  editor: Editor;
+}
+
+export default class InsertImageDropdown extends FormDropdown<IInsertImageDropdownAttrs> {
+  src!: Stream<string>;
+  title!: Stream<string>;
+
+  oninit(vnode: Mithril.Vnode<IInsertImageDropdownAttrs, this>) {
     super.oninit(vnode);
 
     this.src = Stream('');
@@ -44,7 +54,7 @@ export default class InsertImageDropdown extends FormDropdown {
     return items;
   }
 
-  insert(e) {
+  insert(_e: SubmitEvent) {
     this.attrs.editor
       .chain()
       .focus()

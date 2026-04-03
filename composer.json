@@ -13,9 +13,8 @@
     },
     "homepage": "https://friendsofflarum.org",
     "require": {
-        "php": "^8.2",
-        "flarum/core": "^2.0.0-beta",
-        "flarum/markdown": "^2.0.0-beta"
+        "flarum/core": "^2.0.0",
+        "flarum/markdown": "^2.0.0"
     },
     "authors": [
         {
@@ -75,5 +74,7 @@
                 "styleci": true
             }
         }
-    }
+    },
+    "minimum-stability": "beta",
+    "prefer-stable": true
 }

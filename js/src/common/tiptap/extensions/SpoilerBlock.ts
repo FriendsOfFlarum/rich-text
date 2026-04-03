@@ -1,5 +1,7 @@
 import { Node, wrappingInputRule } from '@tiptap/core';
 import { Plugin } from '@tiptap/pm/state';
+import type { EditorView } from '@tiptap/pm/view';
+import type { Node as ProsemirrorNode } from '@tiptap/pm/model';
 
 export const SpoilerBlock = Node.create({
   name: 'spoiler',
@@ -17,7 +19,7 @@ export const SpoilerBlock = Node.create({
   },
 
   renderHTML({ node }) {
-    const attrs = { class: 'spoiler' };
+    const attrs: Record<string, any> = { class: 'spoiler' };
     if (node.attrs.open) attrs.open = true;
     return ['details', attrs, 0];
   },
@@ -34,14 +36,16 @@ export const SpoilerBlock = Node.create({
   addProseMirrorPlugins() {
     const spoilerType = this.type;
 
-    const onClick = (view, pos, node, nodePos, event, direct) => {
-      if (direct && node.type === spoilerType && event.target.tagName !== 'P') {
-        node.attrs.open = !node.attrs.open;
+    const onClick = (view: EditorView, pos: number, node: ProsemirrorNode, nodePos: number, event: MouseEvent, direct: boolean) => {
+      if (direct && node.type === spoilerType && (event.target as Element).tagName !== 'P') {
+        const newAttrs = { ...node.attrs, open: !node.attrs.open };
+        view.dispatch(view.state.tr.setNodeMarkup(nodePos, undefined, newAttrs));
         view.focus();
         event.stopPropagation();
         event.preventDefault();
         return false;
       }
+      return false;
     };
 
     return [

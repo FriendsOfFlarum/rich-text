@@ -1,9 +1,8 @@
+import app from 'flarum/admin/app';
 import applyEditor from '../common/applyEditor';
-import addPreferences from './addPreferences';
+
+export { default as extend } from './extend';
 
 app.initializers.add('fof/rich-text', () => {
-  addPreferences();
   applyEditor();
 });
-
-export * from '../common/index';

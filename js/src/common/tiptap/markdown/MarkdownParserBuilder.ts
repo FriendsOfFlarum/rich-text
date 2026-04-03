@@ -3,21 +3,24 @@ import subPlugin from 'markdown-it-sub';
 import supPlugin from 'markdown-it-sup';
 import latexPlugin from 'markdown-it-latex2img';
 import { defaultMarkdownParser, MarkdownParser } from '@tiptap/pm/markdown';
+import type { Schema } from '@tiptap/pm/model';
 import altText from './markdown-it/altText';
 import blockSpoiler from './markdown-it/blockSpoiler';
 import inlineSpoilerBars from './markdown-it/inlineSpoilerBars';
 import inlineSpoilerTags from './markdown-it/inlineSpoilerTags';
 
 export default class MarkdownParserBuilder {
-  constructor(schema) {
+  schema: Schema;
+
+  constructor(schema: Schema) {
     this.schema = schema;
   }
 
-  tokenizerParams() {
+  tokenizerParams(): markdownit.Options {
     return { html: false };
   }
 
-  buildTokenizer() {
+  buildTokenizer(): markdownit {
     return markdownit('commonmark', this.tokenizerParams())
       .enable('strikethrough')
       .use(altText)
@@ -29,21 +32,21 @@ export default class MarkdownParserBuilder {
       .use(inlineSpoilerTags);
   }
 
-  buildTokens() {
+  buildTokens(): Record<string, any> {
     // The defaultMarkdownParser.tokens uses old prosemirror-markdown names.
     // We need to remap all token names to Tiptap v3 camelCase equivalents.
     const oldTokens = defaultMarkdownParser.tokens;
-    const remappedTokens = {};
+    const remappedTokens: Record<string, any> = {};
 
     // Map from old prosemirror-markdown token names to Tiptap v3 names
-    const blockNameMap = {
+    const blockNameMap: Record<string, string> = {
       blockquote: 'blockquote',
       paragraph: 'paragraph',
       heading: 'heading',
       image: 'image',
     };
 
-    const nodeNameMap = {
+    const nodeNameMap: Record<string, string> = {
       ordered_list: 'orderedList',
       bullet_list: 'bulletList',
       list_item: 'listItem',
@@ -52,7 +55,7 @@ export default class MarkdownParserBuilder {
       horizontal_rule: 'horizontalRule',
     };
 
-    const markNameMap = {
+    const markNameMap: Record<string, string> = {
       em: 'italic',
       strong: 'bold',
       code_inline: 'code',
@@ -60,7 +63,7 @@ export default class MarkdownParserBuilder {
 
     // Remap old tokens to new Tiptap names
     for (const [tokenName, tokenSpec] of Object.entries(oldTokens)) {
-      let newSpec = { ...tokenSpec };
+      let newSpec: any = { ...tokenSpec };
 
       // Remap block references
       if (newSpec.block && nodeNameMap[newSpec.block]) {
@@ -133,7 +136,7 @@ export default class MarkdownParserBuilder {
     };
   }
 
-  build() {
+  build(): MarkdownParser {
     return new MarkdownParser(this.schema, this.buildTokenizer(), this.buildTokens());
   }
 }

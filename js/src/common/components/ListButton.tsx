@@ -1,7 +1,11 @@
-import CommandButton from './CommandButton';
+import CommandButton, { ICommandButtonAttrs } from './CommandButton';
 
-export default class ListButton extends CommandButton {
-  static initAttrs(attrs) {
+export interface IListButtonAttrs extends ICommandButtonAttrs {
+  listType: 'bulletList' | 'orderedList';
+}
+
+export default class ListButton extends CommandButton<IListButtonAttrs> {
+  static initAttrs(attrs: IListButtonAttrs) {
     attrs.command = (editor) => {
       if (attrs.listType === 'bulletList') {
         editor.chain().focus().toggleBulletList().run();
@@ -11,7 +15,7 @@ export default class ListButton extends CommandButton {
     };
   }
 
-  isActive() {
+  isActive(): boolean {
     return !!this.attrs.editor?.isActive(this.attrs.listType);
   }
 }

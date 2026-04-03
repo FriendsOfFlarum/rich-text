@@ -1,19 +1,39 @@
-import Dropdown from 'flarum/common/components/Dropdown';
+import app from 'flarum/common/app';
+import Dropdown, { IDropdownAttrs } from 'flarum/common/components/Dropdown';
 import Tooltip from 'flarum/common/components/Tooltip';
 import extractText from 'flarum/common/utils/extractText';
 import SafariModalHack from './SafariModalHack';
+import type Mithril from 'mithril';
+import type { Editor } from '@tiptap/core';
 
-export default class NodeTypeDropdown extends Dropdown {
-  static initAttrs(attrs) {
+export interface INodeTypeOption {
+  title: string;
+  name: string;
+  attrs?: Record<string, unknown>;
+  tooltip: Mithril.Children;
+}
+
+export interface INodeTypeDropdownAttrs extends IDropdownAttrs {
+  tooltip: string;
+  editor: Editor;
+  options: INodeTypeOption[];
+  onclick?: () => void;
+  buttonAttrs?: Record<string, string>;
+}
+
+export default class NodeTypeDropdown extends Dropdown<INodeTypeDropdownAttrs> {
+  activeIndex!: number;
+
+  static initAttrs(attrs: INodeTypeDropdownAttrs) {
     attrs.buttonClassName = 'Button Button--icon Button--link NodeTypeButton Button--menuDropdown';
   }
 
-  oninit(vnode) {
+  oninit(vnode: Mithril.Vnode<INodeTypeDropdownAttrs, this>) {
     super.oninit(vnode);
     this.activeIndex = 0;
   }
 
-  oncreate(vnode) {
+  oncreate(vnode: Mithril.VnodeDOM<INodeTypeDropdownAttrs, this>) {
     super.oncreate(vnode);
 
     this.$().on('click', (e) => {
@@ -29,12 +49,12 @@ export default class NodeTypeDropdown extends Dropdown {
     this.onEditorUpdate();
   }
 
-  onupdate(vnode) {
+  onupdate(vnode: Mithril.VnodeDOM<INodeTypeDropdownAttrs, this>) {
     super.onupdate(vnode);
     this.onEditorUpdate();
   }
 
-  getButton(children) {
+  getButton(children: Mithril.ChildArray) {
     return (
       <button
         type="button"
@@ -49,7 +69,7 @@ export default class NodeTypeDropdown extends Dropdown {
     );
   }
 
-  getButtonContent(children) {
+  getButtonContent(_children: Mithril.ChildArray) {
     return (
       <Tooltip text={this.attrs.tooltip}>
         <span className="NodeTypeButton-label"></span>
@@ -73,17 +93,17 @@ export default class NodeTypeDropdown extends Dropdown {
       ));
   }
 
-  getMenu(items) {
+  getMenu(_items: Mithril.Vnode[]) {
     return <ul className={'Dropdown-menu dropdown-menu NodeTypeDropdownMenu'}>{this.getNodeTypeButtons()}</ul>;
   }
 
-  keydown(name, attrs, e) {
+  keydown(name: string, attrs: Record<string, unknown> | undefined, e: KeyboardEvent) {
     if (e.key === ' ' || e.key === 'Enter') {
       this.click(name, attrs, e);
     }
   }
 
-  click(name, attrs, e) {
+  click(name: string, attrs: Record<string, unknown> | undefined, e: Event) {
     app.modal.close();
     e.preventDefault();
 
@@ -93,7 +113,11 @@ export default class NodeTypeDropdown extends Dropdown {
     if (name === 'paragraph') {
       editor.chain().focus().setParagraph().run();
     } else if (name === 'heading') {
-      editor.chain().focus().setHeading(attrs).run();
+      editor
+        .chain()
+        .focus()
+        .setHeading(attrs as { level: 1 | 2 | 3 | 4 | 5 | 6 })
+        .run();
     }
   }
 
