@@ -1,10 +1,24 @@
+import app from 'flarum/common/app';
 import Button from 'flarum/common/components/Button';
 import extractText from 'flarum/common/utils/extractText';
 import Stream from 'flarum/common/utils/Stream';
-import FormDropdown from './FormDropdown';
+import FormDropdown, { IFormDropdownAttrs } from './FormDropdown';
+import type Mithril from 'mithril';
+import type { Editor } from '@tiptap/core';
 
-export default class InsertLinkDropdown extends FormDropdown {
-  oninit(vnode) {
+export interface IInsertLinkDropdownAttrs extends IFormDropdownAttrs {
+  editor: Editor;
+}
+
+export default class InsertLinkDropdown extends FormDropdown<IInsertLinkDropdownAttrs> {
+  text!: Stream<string>;
+  href!: Stream<string>;
+  title!: Stream<string>;
+  active!: boolean;
+  selectionEmpty!: boolean;
+  isOpen!: boolean;
+
+  oninit(vnode: Mithril.Vnode<IInsertLinkDropdownAttrs, this>) {
     super.oninit(vnode);
 
     this.text = Stream('');
@@ -15,7 +29,7 @@ export default class InsertLinkDropdown extends FormDropdown {
     this.isOpen = false;
   }
 
-  oncreate(vnode) {
+  oncreate(vnode: Mithril.VnodeDOM<IInsertLinkDropdownAttrs, this>) {
     super.oncreate(vnode);
 
     this.$().on('shown.bs.dropdown', () => {
@@ -26,7 +40,7 @@ export default class InsertLinkDropdown extends FormDropdown {
     });
   }
 
-  onupdate(vnode) {
+  onupdate(vnode: Mithril.VnodeDOM<IInsertLinkDropdownAttrs, this>) {
     super.onupdate(vnode);
 
     if (this.isOpen) return;
@@ -104,7 +118,7 @@ export default class InsertLinkDropdown extends FormDropdown {
     return items;
   }
 
-  insert(e) {
+  insert(_e: SubmitEvent) {
     const editor = this.attrs.editor;
     const linkAttrs = { href: this.href(), title: this.title() };
 
@@ -130,9 +144,9 @@ export default class InsertLinkDropdown extends FormDropdown {
     this.title('');
   }
 
-  remove(e) {
+  remove(_e: Event) {
     $('body').trigger('click');
     this.attrs.editor.chain().focus().unsetLink().run();
-    app.composer.editor.focus();
+    (app as any).composer.editor?.focus();
   }
 }

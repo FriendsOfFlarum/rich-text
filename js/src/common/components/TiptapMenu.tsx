@@ -1,5 +1,8 @@
-import Component from 'flarum/common/Component';
+import app from 'flarum/common/app';
+import Component, { ComponentAttrs } from 'flarum/common/Component';
 import ItemList from 'flarum/common/utils/ItemList';
+import type Mithril from 'mithril';
+import type { Editor } from '@tiptap/core';
 
 import CommandButton from './CommandButton';
 import MarkButton from './MarkButton';
@@ -9,21 +12,27 @@ import InsertLinkDropdown from './InsertLinkDropdown';
 import ListButton from './ListButton';
 import HiddenItemsDropdown from './HiddenItemsDropdown';
 
-export default class TiptapMenu extends Component {
-  oninit(vnode) {
+export interface ITiptapMenuAttrs extends ComponentAttrs {
+  editor: Editor;
+}
+
+export default class TiptapMenu extends Component<ITiptapMenuAttrs> {
+  modifierKey!: string;
+
+  oninit(vnode: Mithril.Vnode<ITiptapMenuAttrs, this>) {
     super.oninit(vnode);
 
     this.modifierKey = navigator.userAgent.match(/Macintosh/) ? '⌘' : 'ctrl';
   }
 
-  view(vnode) {
+  view(_vnode: Mithril.Vnode<ITiptapMenuAttrs, this>) {
     if (!this.attrs.editor) return '';
 
     return <div class="ProseMirrorMenu">{this.items().toArray()}</div>;
   }
 
-  items() {
-    const items = new ItemList();
+  items(): ItemList<Mithril.Children> {
+    const items = new ItemList<Mithril.Children>();
     const editor = this.attrs.editor;
     const modifierKey = this.modifierKey;
 
@@ -31,7 +40,7 @@ export default class TiptapMenu extends Component {
       'text_type',
       NodeTypeDropdown.component({
         type: 'text_type',
-        tooltip: app.translator.trans('fof-rich-text.lib.composer.text_type_tooltip'),
+        tooltip: app.translator.trans('fof-rich-text.lib.composer.text_type_tooltip') as string,
         editor: editor,
         options: [
           {
@@ -76,6 +85,8 @@ export default class TiptapMenu extends Component {
             tooltip: app.translator.trans('fof-rich-text.lib.composer.paragraph_tooltip', { modifierKey }),
           },
         ],
+        label: '',
+        helperText: '',
       }),
       100
     );
@@ -123,7 +134,7 @@ export default class TiptapMenu extends Component {
         icon: 'fas fa-quote-left',
         tooltip: app.translator.trans('fof-rich-text.lib.composer.quote_tooltip', { modifierKey }),
         editor: editor,
-        command: (editor) => editor.chain().focus().toggleBlockquote().run(),
+        command: (e: import('@tiptap/core').Editor) => e.chain().focus().toggleBlockquote().run(),
       }),
       70
     );
@@ -147,7 +158,7 @@ export default class TiptapMenu extends Component {
         icon: 'fas fa-code',
         tooltip: app.translator.trans('fof-rich-text.lib.composer.code_block_tooltip', { modifierKey }),
         editor: editor,
-        command: (editor) => editor.chain().focus().toggleCodeBlock().run(),
+        command: (e: import('@tiptap/core').Editor) => e.chain().focus().toggleCodeBlock().run(),
       }),
       60
     );
@@ -157,8 +168,10 @@ export default class TiptapMenu extends Component {
       InsertLinkDropdown.component({
         type: 'link',
         icon: 'fas fa-link',
-        tooltip: app.translator.trans('fof-rich-text.lib.composer.link_tooltip'),
+        tooltip: app.translator.trans('fof-rich-text.lib.composer.link_tooltip') as string,
         editor: editor,
+        label: '',
+        helperText: '',
       }),
       50
     );
@@ -168,8 +181,10 @@ export default class TiptapMenu extends Component {
       InsertImageDropdown.component({
         type: 'image',
         icon: 'fas fa-image',
-        tooltip: app.translator.trans('fof-rich-text.lib.composer.image_tooltip'),
+        tooltip: app.translator.trans('fof-rich-text.lib.composer.image_tooltip') as string,
         editor: editor,
+        label: '',
+        helperText: '',
       }),
       40
     );
@@ -203,17 +218,19 @@ export default class TiptapMenu extends Component {
       HiddenItemsDropdown.component({
         type: 'additional_items',
         icon: 'fas fa-plus',
-        tooltip: app.translator.trans('fof-rich-text.lib.composer.additional_items_tooltip'),
+        tooltip: app.translator.trans('fof-rich-text.lib.composer.additional_items_tooltip') as string,
         state: editor,
         buttons: this.hiddenItems().toArray(),
+        label: '',
+        helperText: '',
       })
     );
 
     return items;
   }
 
-  hiddenItems() {
-    const items = new ItemList();
+  hiddenItems(): ItemList<Mithril.Children> {
+    const items = new ItemList<Mithril.Children>();
     const editor = this.attrs.editor;
     const modifierKey = this.modifierKey;
 
@@ -257,7 +274,7 @@ export default class TiptapMenu extends Component {
         icon: 'fas fa-caret-square-right',
         tooltip: app.translator.trans('fof-rich-text.lib.composer.spoiler_block_tooltip', { modifierKey }),
         editor: editor,
-        command: (editor) => {
+        command: (editor: import('@tiptap/core').Editor) => {
           if (editor.isActive('spoiler')) {
             editor.chain().focus().lift('spoiler').run();
           } else {
@@ -274,7 +291,7 @@ export default class TiptapMenu extends Component {
         icon: 'fas fa-minus',
         tooltip: app.translator.trans('fof-rich-text.lib.composer.horizontal_rule_tooltip'),
         editor: editor,
-        command: (editor) => editor.chain().focus().setHorizontalRule().run(),
+        command: (e: import('@tiptap/core').Editor) => e.chain().focus().setHorizontalRule().run(),
       })
     );
 

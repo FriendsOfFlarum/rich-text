@@ -15,11 +15,13 @@ import { Subscript } from './extensions/Subscript';
 import { Superscript } from './extensions/Superscript';
 import { DisableDataUriPaste } from './extensions/DisableDataUriPaste';
 import { RichTextKeymap, CompactParagraphs, LinkExitOnPaste } from './extensions/RichTextKeymap';
+import type EditorDriverInterface from 'flarum/common/utils/EditorDriverInterface';
+import type { EditorDriverParams } from 'flarum/common/utils/EditorDriverInterface';
 
 /**
  * Custom extension that wires Flarum's Mod-Enter (submit) and Escape (close) shortcuts.
  */
-const FlarumShortcuts = Extension.create({
+const FlarumShortcuts = Extension.create<{ onsubmit: (() => void) | null; escape: (() => void) | null }>({
   name: 'flarumShortcuts',
 
   addOptions() {
@@ -30,18 +32,18 @@ const FlarumShortcuts = Extension.create({
   },
 
   addKeyboardShortcuts() {
-    const shortcuts = {};
+    const shortcuts: Record<string, () => boolean> = {};
 
     if (this.options.onsubmit) {
       shortcuts['Mod-Enter'] = () => {
-        this.options.onsubmit();
+        this.options.onsubmit!();
         return true;
       };
     }
 
     if (this.options.escape) {
       shortcuts['Escape'] = () => {
-        this.options.escape();
+        this.options.escape!();
         return true;
       };
     }
@@ -50,12 +52,17 @@ const FlarumShortcuts = Extension.create({
   },
 });
 
-export default class TiptapEditorDriver {
-  constructor(target, attrs) {
+export default class TiptapEditorDriver implements EditorDriverInterface {
+  editor!: Editor;
+  attrs!: EditorDriverParams & { escape?: () => void };
+  parser!: MarkdownParserBuilder['build'] extends () => infer R ? R : never;
+  serializer!: MarkdownSerializerBuilder['build'] extends () => infer R ? R : never;
+
+  constructor(target: HTMLElement, attrs: EditorDriverParams & { escape?: () => void }) {
     this.build(target, attrs);
   }
 
-  build(target, attrs) {
+  build(target: HTMLElement, attrs: EditorDriverParams & { escape?: () => void }) {
     this.attrs = attrs;
 
     // Create the editor first (without initial content) to get the schema
@@ -81,7 +88,7 @@ export default class TiptapEditorDriver {
     // Parse and set initial content (emitUpdate=false to avoid marking composer dirty)
     if (attrs.value) {
       const doc = this.parser.parse(attrs.value);
-      this.editor.commands.setContent(doc.toJSON(), { emitUpdate: false });
+      this.editor.commands.setContent(doc.toJSON(), { emitUpdate: false } as any);
     }
 
     // Apply CSS classes to the editor DOM
@@ -89,36 +96,31 @@ export default class TiptapEditorDriver {
     cssClasses.forEach((className) => this.editor.view.dom.classList.add(className));
 
     // Wire up Flarum's input listeners
-    const callInputListeners = (e) => {
+    const callInputListeners = (e?: Event & { redraw?: boolean }) => {
       attrs.inputListeners.forEach((listener) => {
         listener.call(target);
       });
       if (e) e.redraw = false;
     };
 
-    target.oninput = callInputListeners;
-    target.onclick = callInputListeners;
-    target.onkeyup = callInputListeners;
+    (target as any).oninput = callInputListeners;
+    (target as any).onclick = callInputListeners;
+    (target as any).onkeyup = callInputListeners;
   }
 
-  serializeContent(doc) {
+  serializeContent(doc: any): string {
     return this.serializer.serialize(doc);
   }
 
-  buildExtensions() {
-    const items = new ItemList();
+  buildExtensions(): ItemList<any> {
+    const items = new ItemList<any>();
 
     items.add(
       'starterKit',
       StarterKit.configure({
-        // StarterKit includes: Document, Paragraph, Text, Bold, Italic, Strike, Code,
-        // Heading, Blockquote, CodeBlock, BulletList, OrderedList, ListItem,
-        // HardBreak, HorizontalRule, UndoRedo, Dropcursor, Gapcursor,
-        // Link, TrailingNode, Underline (disabled below)
         underline: false,
         link: {
           openOnClick: false,
-          inclusive: false,
         },
       })
     );
@@ -153,15 +155,15 @@ export default class TiptapEditorDriver {
       'compactParagraphs',
       CompactParagraphs.configure({
         enabled:
-          app.forum.attribute('richTextForceCompactParagraphs') || (app.session.user && app.session.user.preferences().richTextCompactParagraphs),
+          app.forum.attribute('richTextForceCompactParagraphs') || (app.session.user && app.session.user.preferences()?.richTextCompactParagraphs),
       })
     );
 
     items.add(
       'flarumShortcuts',
       FlarumShortcuts.configure({
-        onsubmit: this.attrs.onsubmit,
-        escape: this.attrs.escape,
+        onsubmit: this.attrs.onsubmit as (() => void) | null,
+        escape: this.attrs.escape ?? null,
       })
     );
 
@@ -170,31 +172,31 @@ export default class TiptapEditorDriver {
 
   // ── EditorDriverInterface ──────────────────────────────────────────
 
-  moveCursorTo(position) {
+  moveCursorTo(position: number) {
     this.setSelectionRange(position, position);
   }
 
-  getSelectionRange() {
+  getSelectionRange(): [number, number] {
     const { from, to } = this.editor.state.selection;
     return [from, to];
   }
 
-  getLastNChars(n) {
+  getLastNChars(n: number): string {
     const lastNode = this.editor.state.selection.$from.nodeBefore;
     if (!lastNode || !lastNode.text) return '';
     return lastNode.text.slice(Math.max(0, lastNode.text.length - n));
   }
 
-  insertAtCursor(text, escape) {
+  insertAtCursor(text: string, escape: boolean) {
     this.insertAt(this.getSelectionRange()[0], text, escape);
     $(this.editor.view.dom).trigger('click');
   }
 
-  insertAt(pos, text, escape) {
+  insertAt(pos: number, text: string, escape: boolean) {
     this.insertBetween(pos, pos, text, escape);
   }
 
-  insertBetween(start, end, text, escape = true) {
+  insertBetween(start: number, end: number, text: string, escape = true) {
     const { view } = this.editor;
     let trailingNewLines = 0;
     const OFFSET_TO_REMOVE_PREFIX_NEWLINE = 1;
@@ -218,7 +220,7 @@ export default class TiptapEditorDriver {
     m.redraw();
 
     if (text.endsWith(' ') && !escape) {
-      this.insertAtCursor(' ');
+      this.insertAtCursor(' ', true);
     }
 
     Array(trailingNewLines)
@@ -228,11 +230,11 @@ export default class TiptapEditorDriver {
       });
   }
 
-  replaceBeforeCursor(start, text, escape) {
+  replaceBeforeCursor(start: number, text: string, escape: boolean) {
     this.insertBetween(start, this.getSelectionRange()[0], text, escape);
   }
 
-  setSelectionRange(start, end) {
+  setSelectionRange(start: number, end: number) {
     const { state } = this.editor.view;
     const $start = state.tr.doc.resolve(start);
     const $end = state.tr.doc.resolve(end);
@@ -240,7 +242,7 @@ export default class TiptapEditorDriver {
     this.focus();
   }
 
-  getCaretCoordinates(position) {
+  getCaretCoordinates(position: number): { left: number; top: number } {
     const viewportCoords = this.editor.view.coordsAtPos(position);
     const editorViewportOffset = this.editor.view.dom.getBoundingClientRect();
     return {
@@ -257,7 +259,7 @@ export default class TiptapEditorDriver {
     this.editor.destroy();
   }
 
-  disabled(disabled) {
+  disabled(disabled: boolean) {
     this.editor.setEditable(!disabled);
   }
 }

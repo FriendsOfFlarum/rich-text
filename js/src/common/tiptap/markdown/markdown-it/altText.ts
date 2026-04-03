@@ -1,19 +1,9 @@
 // COPIED FROM https://github.com/markdown-it/markdown-it/blob/master/lib/rules_inline/text.js
 // NEEDED TO ALLOW `|` as terminator character.
 
-// Skip text characters for text token, place those to pending buffer
-// and increment current pos
-
 'use strict';
 
-// Rule to skip pure text
-// '{}$%@~+=:' reserved for extentions
-
-// !, ", #, $, %, &, ', (, ), *, +, ,, -, ., /, :, ;, <, =, >, ?, @, [, \, ], ^, _, `, {, |, }, or ~
-
-// !!!! Don't confuse with "Markdown ASCII Punctuation" chars
-// http://spec.commonmark.org/0.15/#ascii-punctuation-character
-function isTerminatorChar(ch) {
+function isTerminatorChar(ch: number): boolean {
   switch (ch) {
     case 0x0a /* \n */:
     case 0x21 /* ! */:
@@ -45,7 +35,7 @@ function isTerminatorChar(ch) {
   }
 }
 
-const tokenize = (state, silent) => {
+const tokenize = (state: any, silent: boolean): boolean => {
   var pos = state.pos;
 
   while (pos < state.posMax && !isTerminatorChar(state.src.charCodeAt(pos))) {
@@ -65,7 +55,7 @@ const tokenize = (state, silent) => {
   return true;
 };
 
-export default function (md) {
+export default function (md: any) {
   md.inline.ruler.before('text', 'altText', tokenize);
   md.inline.ruler.disable('text');
 }

@@ -1,6 +1,13 @@
-import Modal from 'flarum/common/components/Modal';
+import Modal, { IInternalModalAttrs } from 'flarum/common/components/Modal';
+import type Mithril from 'mithril';
 
-export default class SafariModalHack extends Modal {
+export interface ISafariModalHackAttrs extends IInternalModalAttrs {
+  title: Mithril.Children;
+  vnodeContent: Mithril.Children;
+  onsubmit?: (e: SubmitEvent) => void;
+}
+
+export default class SafariModalHack extends Modal<ISafariModalHackAttrs> {
   className() {
     return 'LoadingModal Modal--small';
   }
@@ -9,7 +16,7 @@ export default class SafariModalHack extends Modal {
     return this.attrs.title;
   }
 
-  oncreate(vnode) {
+  oncreate(vnode: Mithril.VnodeDOM<ISafariModalHackAttrs, this>) {
     super.oncreate(vnode);
 
     this.$('.CommandButton').on('click', () => {
