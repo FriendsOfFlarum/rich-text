@@ -1,4 +1,5 @@
 import { Editor, Extension } from '@tiptap/core';
+import './tiptap'; // ensure Node/Mark/Extension are registered in flarum.reg for third-party extensions
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
 import Placeholder from '@tiptap/extension-placeholder';
