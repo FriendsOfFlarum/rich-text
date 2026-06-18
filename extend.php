@@ -16,24 +16,26 @@ use Flarum\Extend;
 
 return [
     (new Extend\Frontend('forum'))
-        ->js(__DIR__.'/js/dist/forum.js')
-        ->css(__DIR__.'/resources/less/forum.less')
-        ->jsDirectory(__DIR__.'/js/dist/forum'),
+        ->js(__DIR__ . '/js/dist/forum.js')
+        ->css(__DIR__ . '/resources/less/forum.less')
+        ->jsDirectory(__DIR__ . '/js/dist/forum'),
 
     (new Extend\Frontend('admin'))
-        ->js(__DIR__.'/js/dist/admin.js')
-        ->jsDirectory(__DIR__.'/js/dist/admin'),
+        ->js(__DIR__ . '/js/dist/admin.js')
+        ->jsDirectory(__DIR__ . '/js/dist/admin'),
 
     (new Extend\Frontend('common'))
-        ->jsDirectory(__DIR__.'/js/dist/common'),
+        ->jsDirectory(__DIR__ . '/js/dist/common'),
 
-    new Extend\Locales(__DIR__.'/resources/locale'),
+    new Extend\Locales(__DIR__ . '/resources/locale'),
 
     (new Extend\User())
         ->registerPreference('useRichTextEditor', 'boolval', true)
         ->registerPreference('richTextCompactParagraphs', 'boolval', false),
 
     (new Extend\Settings())
-        ->serializeToForum('toggleRichTextEditorButton', 'fof-rich-text.toggle_on_editor', 'boolval', false)
-        ->serializeToForum('richTextForceCompactParagraphs', 'fof-rich-text.force_compact_paragraphs', 'boolval', false),
+        ->default('fof-rich-text.toggle_on_editor', false)
+        ->default('fof-rich-text.force_compact_paragraphs', false)
+        ->serializeToForum('toggleRichTextEditorButton', 'fof-rich-text.toggle_on_editor', 'boolval')
+        ->serializeToForum('richTextForceCompactParagraphs', 'fof-rich-text.force_compact_paragraphs', 'boolval'),
 ];
