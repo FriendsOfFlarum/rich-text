@@ -16,6 +16,9 @@
         "flarum/core": "^2.0.0",
         "flarum/markdown": "^2.0.0"
     },
+    "require-dev": {
+        "flarum/phpstan": "^2.0.0"
+    },
     "authors": [
         {
             "name": "Alexander Skvortsov",
@@ -74,6 +77,13 @@
                 "styleci": true
             }
         }
+    },
+    "scripts": {
+        "analyse:phpstan": "phpstan analyse",
+        "clear-cache:phpstan": "phpstan clear-result-cache"
+    },
+    "scripts-descriptions": {
+        "analyse:phpstan": "Run static analysis"
     },
     "minimum-stability": "beta",
     "prefer-stable": true

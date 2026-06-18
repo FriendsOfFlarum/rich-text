@@ -34,6 +34,8 @@ return [
         ->registerPreference('richTextCompactParagraphs', 'boolval', false),
 
     (new Extend\Settings())
-        ->serializeToForum('toggleRichTextEditorButton', 'fof-rich-text.toggle_on_editor', 'boolval', false)
-        ->serializeToForum('richTextForceCompactParagraphs', 'fof-rich-text.force_compact_paragraphs', 'boolval', false),
+        ->default('fof-rich-text.toggle_on_editor', false)
+        ->default('fof-rich-text.force_compact_paragraphs', false)
+        ->serializeToForum('toggleRichTextEditorButton', 'fof-rich-text.toggle_on_editor', 'boolval')
+        ->serializeToForum('richTextForceCompactParagraphs', 'fof-rich-text.force_compact_paragraphs', 'boolval'),
 ];
