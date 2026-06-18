@@ -16,18 +16,18 @@ use Flarum\Extend;
 
 return [
     (new Extend\Frontend('forum'))
-        ->js(__DIR__ . '/js/dist/forum.js')
-        ->css(__DIR__ . '/resources/less/forum.less')
-        ->jsDirectory(__DIR__ . '/js/dist/forum'),
+        ->js(__DIR__.'/js/dist/forum.js')
+        ->css(__DIR__.'/resources/less/forum.less')
+        ->jsDirectory(__DIR__.'/js/dist/forum'),
 
     (new Extend\Frontend('admin'))
-        ->js(__DIR__ . '/js/dist/admin.js')
-        ->jsDirectory(__DIR__ . '/js/dist/admin'),
+        ->js(__DIR__.'/js/dist/admin.js')
+        ->jsDirectory(__DIR__.'/js/dist/admin'),
 
     (new Extend\Frontend('common'))
-        ->jsDirectory(__DIR__ . '/js/dist/common'),
+        ->jsDirectory(__DIR__.'/js/dist/common'),
 
-    new Extend\Locales(__DIR__ . '/resources/locale'),
+    new Extend\Locales(__DIR__.'/resources/locale'),
 
     (new Extend\User())
         ->registerPreference('useRichTextEditor', 'boolval', true)
