@@ -131,8 +131,29 @@ export default class MarkdownSerializerBuilder {
   }
 
   buildMarks(): Record<string, any> {
+    const defaultLink = remappedMarks.link;
+
     return {
       ...remappedMarks,
+
+      // The default link serializer emits CommonMark autolink syntax (`<url>`) for
+      // "plain URL" links (text == href, scheme present, no title) — which Tiptap's
+      // auto-link produces for pasted/typed URLs. Litedown then wraps `<url>` in a
+      // URL tag, blocking fof/formatting's MediaEmbed from claiming it (issue #5).
+      // Emit the URL bare instead: Litedown still auto-links bare URLs, and MediaEmbed
+      // can claim them. Labelled/titled links are untouched.
+      link: {
+        ...defaultLink,
+        open(state: MarkdownSerializerState, mark: Mark, parent: any, index: number) {
+          const out = defaultLink.open(state, mark, parent, index);
+          return (state as any).inAutolink ? '' : out;
+        },
+        close(state: MarkdownSerializerState, mark: Mark, parent: any, index: number) {
+          const wasAutolink = (state as any).inAutolink;
+          const out = defaultLink.close(state, mark, parent, index);
+          return wasAutolink ? '' : out;
+        },
+      },
 
       spoiler_inline: genMarkupAwareMarkConfig({
         open: '>!',
