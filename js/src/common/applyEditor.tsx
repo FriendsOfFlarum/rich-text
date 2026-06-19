@@ -91,6 +91,18 @@ export default function applyEditor() {
   });
 
   override(TextEditor.prototype, 'buildEditor', function (original, dom) {
+    // On a slow first load the editor container may not be in the DOM yet when
+    // core's `onbuild` fires, leaving `dom` undefined (see flarum/framework#4657,
+    // which fixes the upstream race). Constructing Tiptap without a mount target
+    // skips its internal mount and later throws when the view is dereferenced,
+    // which extend()'s try/catch swallows into a dead toolbar. Fall back to core's
+    // BasicEditorDriver so the user still gets a working editor (issue #11).
+    if (!dom) {
+      console.warn('[fof/rich-text] buildEditor called without a mount target; falling back to the basic editor.');
+      this.tiptapEditor = null;
+      return original(dom);
+    }
+
     if (app.session.user?.preferences()?.useRichTextEditor && this._TiptapEditorDriver) {
       const driver = new this._TiptapEditorDriver(dom, this.buildEditorParams() as any);
       this.tiptapEditor = driver.editor;
