@@ -4,7 +4,6 @@ import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
 import Placeholder from '@tiptap/extension-placeholder';
 import { Selection, TextSelection } from '@tiptap/pm/state';
-import { baseKeymap } from '@tiptap/pm/commands';
 import ItemList from 'flarum/common/utils/ItemList';
 
 import { MarkdownParserBuilder, MarkdownSerializerBuilder } from './markdown';
@@ -199,7 +198,6 @@ export default class TiptapEditorDriver implements EditorDriverInterface {
 
   insertBetween(start: number, end: number, text: string, escape = true) {
     const { view } = this.editor;
-    let trailingNewLines = 0;
     const OFFSET_TO_REMOVE_PREFIX_NEWLINE = 1;
 
     if (escape) {
@@ -208,12 +206,14 @@ export default class TiptapEditorDriver implements EditorDriverInterface {
       // Without this, a newline would be added before the inserted text.
       start -= OFFSET_TO_REMOVE_PREFIX_NEWLINE;
 
-      // Parse markdown using our custom parser
+      // Parse markdown using our custom parser. Block parsing already separates blocks
+      // and leaves a single empty paragraph after the inserted content as the cursor's
+      // landing spot, so we must NOT additionally replay the source's trailing newlines
+      // (e.g. the `\n\n` mentions appends after a quote) as Enter keypresses — that
+      // would stack up extra empty paragraphs only visible in the editor, which collapse
+      // on save (issue #10).
       const parsed = this.parser.parse(text);
       view.dispatch(view.state.tr.replaceRangeWith(start, end, parsed));
-
-      const trailingMatch = text.match(/\s+$/);
-      trailingNewLines = trailingMatch ? trailingMatch[0].split('\n').length - 1 : 0;
     }
 
     // Move the cursor to the end of the inserted content.
@@ -223,12 +223,6 @@ export default class TiptapEditorDriver implements EditorDriverInterface {
     if (text.endsWith(' ') && !escape) {
       this.insertAtCursor(' ', true);
     }
-
-    Array(trailingNewLines)
-      .fill(0)
-      .forEach(() => {
-        baseKeymap['Enter'](view.state, view.dispatch);
-      });
   }
 
   replaceBeforeCursor(start: number, text: string, escape: boolean) {
