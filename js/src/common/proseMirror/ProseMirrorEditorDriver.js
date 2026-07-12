@@ -9,6 +9,7 @@ import { gapCursor } from 'prosemirror-gapcursor';
 import ItemList from 'flarum/common/utils/ItemList';
 import disabledPlugin from './plugins/disabledPlugin';
 import disableBase64PastePlugin from './plugins/disableBase64PastePlugin';
+import disableImagePastePlugin from './plugins/disableImagePastePlugin';
 import placeholderPlugin from './plugins/placeholderPlugin';
 import menuPlugin from './plugins/menuPlugin';
 import toggleSpoiler from './plugins/toggleSpoiler';
@@ -18,6 +19,8 @@ import MarkdownSerializerBuilder from './markdown/MarkdownSerializerBuilder';
 import MarkdownParserBuilder from './markdown/MarkdownParserBuilder';
 import SchemaBuilder from './markdown/SchemaBuilder';
 import { inputRules } from 'prosemirror-inputrules';
+import { lift, splitBlock } from 'prosemirror-commands';
+import { liftTarget } from 'prosemirror-transform';
 
 export default class ProseMirrorEditorDriver {
   constructor(target, attrs) {
@@ -79,6 +82,8 @@ export default class ProseMirrorEditorDriver {
     items.add('disabled', disabledPlugin());
 
     items.add('disableBase64Paste', disableBase64PastePlugin());
+
+    items.add('disableImagePastePlugin', disableImagePastePlugin());
 
     items.add('dropCursor', dropCursor());
 
@@ -170,6 +175,30 @@ export default class ProseMirrorEditorDriver {
     this.insertBetween(pos, pos, text, escape);
   }
 
+  exitBlockquote(view) {
+    const { state, dispatch } = view;
+    const { selection, schema } = state;
+    const { $from } = selection;
+
+    for (let depth = $from.depth; depth > 0; depth--) {
+      const node = $from.node(depth);
+
+      if (node.type === schema.nodes.blockquote) {
+        const posAfter = $from.after(depth);
+
+        const tr = state.tr;
+        tr.insert(posAfter, schema.nodes.paragraph.create());
+
+        tr.setSelection(TextSelection.create(tr.doc, posAfter + 1));
+
+        dispatch(tr);
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   /**
    * Insert content into the textarea between the given positions.
    *
@@ -186,15 +215,22 @@ export default class ProseMirrorEditorDriver {
 
     const OFFSET_TO_REMOVE_PREFIX_NEWLINE = 1;
 
+    const doc = this.view.state.doc;
+
+    if (start > 0) {
+      const $pos = doc.resolve(start);
+      const before = $pos.nodeBefore;
+
+      if ((before && before.isText && before.text === '\n') || !before) {
+        start -= 1;
+      }
+    }
+
     if (escape) {
       this.view.dispatch(this.view.state.tr.insertText(text, start, end));
     } else {
-      // Without this, a newline would be added before the inserted text.
-      start -= OFFSET_TO_REMOVE_PREFIX_NEWLINE;
       const parsedText = this.parseInitialValue(text);
       this.view.dispatch(this.view.state.tr.replaceRangeWith(start, end, parsedText));
-
-      trailingNewLines = text.match(/\s+$/)[0].split('\n').length - 1;
     }
 
     // Move the textarea cursor to the end of the content we just inserted.
@@ -206,6 +242,12 @@ export default class ProseMirrorEditorDriver {
     // TODO: accomplish this in one step.
     if (text.endsWith(' ') && !escape) {
       this.insertAtCursor(' ');
+    }
+    if (text.startsWith('>')) {
+      this.exitBlockquote(this.view);
+    }
+    if (text.endsWith('\n') && text != '\n' && text != '\n\n') {
+      this.insertAtCursor('\n\n', false);
     }
 
     Array(trailingNewLines)
