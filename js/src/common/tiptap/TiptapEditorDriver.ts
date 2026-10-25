@@ -216,8 +216,11 @@ export default class TiptapEditorDriver implements EditorDriverInterface {
       view.dispatch(view.state.tr.replaceRangeWith(start, end, parsed));
     }
 
-    // Move the cursor to the end of the inserted content.
-    this.moveCursorTo(Math.min(start + text.length + OFFSET_TO_REMOVE_PREFIX_NEWLINE, Selection.atEnd(view.state.doc).to));
+    // Move the cursor to the end of the inserted content. Only the markdown
+    // branch moved `start` back, so only it adds the offset back; adding it to
+    // escaped text (autocomplete, emoji) put the cursor one character past it.
+    const insertedEnd = start + text.length + (escape ? 0 : OFFSET_TO_REMOVE_PREFIX_NEWLINE);
+    this.moveCursorTo(Math.min(insertedEnd, Selection.atEnd(view.state.doc).to));
     m.redraw();
 
     if (text.endsWith(' ') && !escape) {
