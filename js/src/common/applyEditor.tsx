@@ -1,4 +1,5 @@
 import type EditorDriverInterface from 'flarum/common/utils/EditorDriverInterface';
+import type ComposerState from 'flarum/forum/states/ComposerState';
 import app from 'flarum/common/app';
 import { extend, override } from 'flarum/common/extend';
 
@@ -16,13 +17,17 @@ declare module 'flarum/common/components/TextEditor' {
     _TiptapEditorDriver: typeof TiptapEditorDriver | undefined;
     _TiptapMenu: typeof TiptapMenu | undefined;
     tiptapEditor: Editor | null | undefined;
+    _useRichTextEditor: boolean;
+    _richTextToggleLoading: boolean;
   }
 }
 
 export default function applyEditor() {
   // Lazy load the Tiptap editor bundle when rich text is enabled
   extend(TextEditor.prototype, 'oninit', function () {
-    if (!app.session.user || !app.session.user.preferences()?.useRichTextEditor) return;
+    this._useRichTextEditor = Boolean(app.session.user?.preferences()?.useRichTextEditor);
+    this._richTextToggleLoading = false;
+    if (!this._useRichTextEditor) return;
 
     this._loaders = this._loaders || [];
     this._loaders.push(() =>
@@ -39,8 +44,15 @@ export default function applyEditor() {
 
     const user = app.session.user;
 
-    const buttonOnClick = () => {
-      const newValue = !user.preferences()?.useRichTextEditor;
+    const buttonOnClick = async () => {
+      if (this._richTextToggleLoading) return;
+      const composer = (this.attrs as { composer: ComposerState }).composer;
+      const currentEditor = composer.editor as EditorDriverInterface | null;
+      const container = this.$('.TextEditor-editorContainer')[0];
+      if (!currentEditor || !container?.isConnected) return;
+
+      const newValue = !this._useRichTextEditor;
+      this._richTextToggleLoading = true;
 
       // When switching to rich text, ensure modules are loaded first
       const loadModules =
@@ -51,12 +63,27 @@ export default function applyEditor() {
             })
           : Promise.resolve();
 
-      Promise.all([user.savePreferences({ useRichTextEditor: newValue }), loadModules]).then(() => {
-        ((app as any).composer.editor as EditorDriverInterface).destroy();
-        (this.attrs as any).composer.editor = this.buildEditor(this.$('.TextEditor-editorContainer')[0]);
+      try {
+        await Promise.all([user.savePreferences({ useRichTextEditor: newValue }), loadModules]);
+
+        // Closing or replacing the composer while the request is pending invalidates this editor.
+        if (!container.isConnected || composer.editor !== currentEditor) return;
+
+        this._useRichTextEditor = newValue;
+        currentEditor.destroy();
+        container.replaceChildren();
+        this.tiptapEditor = null;
+        // Run core's build lifecycle so mentions, emoji, and upload hooks are reattached.
+        this.onbuild();
         m.redraw.sync();
-        ((app as any).composer.editor as EditorDriverInterface).focus();
-      });
+        composer.editor?.focus();
+      } catch (error) {
+        console.error('[fof/rich-text] Unable to switch editor mode.', error);
+        app.alerts.show({ type: 'error' }, app.translator.trans('core.lib.error.generic_message'));
+      } finally {
+        this._richTextToggleLoading = false;
+        m.redraw();
+      }
     };
 
     items.add(
@@ -64,7 +91,8 @@ export default function applyEditor() {
       <Tooltip text={app.translator.trans('fof-rich-text.lib.composer.toggle_button')}>
         <Button
           icon="fas fa-pen-fancy"
-          className={classList({ Button: true, 'Button--icon': true, active: user.preferences()?.useRichTextEditor })}
+          className={classList({ Button: true, 'Button--icon': true, active: this._useRichTextEditor })}
+          loading={this._richTextToggleLoading}
           onclick={buttonOnClick}
         />
       </Tooltip>,
@@ -73,7 +101,7 @@ export default function applyEditor() {
   });
 
   extend(TextEditor.prototype, 'toolbarItems', function (items) {
-    if (!app.session.user?.preferences()?.useRichTextEditor) return;
+    if (!this._useRichTextEditor) return;
     if (!this._TiptapMenu || !this.tiptapEditor) return;
 
     const TiptapMenu = this._TiptapMenu;
@@ -84,7 +112,7 @@ export default function applyEditor() {
   });
 
   extend(TextEditor.prototype, 'buildEditorParams', function (items) {
-    if (!app.session.user?.preferences()?.useRichTextEditor) return;
+    if (!this._useRichTextEditor) return;
 
     items.classNames.push('Post-body');
     (items as any).escape = () => (app as any).composer.close();
@@ -103,7 +131,7 @@ export default function applyEditor() {
       return original(dom);
     }
 
-    if (app.session.user?.preferences()?.useRichTextEditor && this._TiptapEditorDriver) {
+    if (this._useRichTextEditor && this._TiptapEditorDriver) {
       const driver = new this._TiptapEditorDriver(dom, this.buildEditorParams() as any);
       this.tiptapEditor = driver.editor;
       return driver;
