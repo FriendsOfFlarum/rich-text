@@ -6,6 +6,8 @@ declare module 'flarum/common/components/TextEditor' {
         _TiptapEditorDriver: typeof TiptapEditorDriver | undefined;
         _TiptapMenu: typeof TiptapMenu | undefined;
         tiptapEditor: Editor | null | undefined;
+        _useRichTextEditor: boolean;
+        _richTextToggleLoading: boolean;
     }
 }
 export default function applyEditor(): void;

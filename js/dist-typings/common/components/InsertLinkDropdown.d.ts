@@ -11,9 +11,7 @@ export default class InsertLinkDropdown extends FormDropdown<IInsertLinkDropdown
     title: Stream<string>;
     active: boolean;
     selectionEmpty: boolean;
-    isOpen: boolean;
     oninit(vnode: Mithril.Vnode<IInsertLinkDropdownAttrs, this>): void;
-    oncreate(vnode: Mithril.VnodeDOM<IInsertLinkDropdownAttrs, this>): void;
     onupdate(vnode: Mithril.VnodeDOM<IInsertLinkDropdownAttrs, this>): void;
     fields(): import("flarum/common/utils/ItemList").default<Mithril.Children>;
     insert(_e: SubmitEvent): void;

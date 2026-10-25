@@ -11,6 +11,7 @@ export default class TiptapEditorDriver implements EditorDriverInterface {
     };
     parser: MarkdownParserBuilder['build'] extends () => infer R ? R : never;
     serializer: MarkdownSerializerBuilder['build'] extends () => infer R ? R : never;
+    private cleanupInputListeners?;
     constructor(target: HTMLElement, attrs: EditorDriverParams & {
         escape?: () => void;
     });

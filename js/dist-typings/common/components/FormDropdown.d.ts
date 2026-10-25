@@ -10,6 +10,8 @@ export interface IFormDropdownAttrs extends IDropdownAttrs {
     buttonAttrs?: Record<string, string>;
 }
 export default class FormDropdown<CustomAttrs extends IFormDropdownAttrs = IFormDropdownAttrs> extends Dropdown<CustomAttrs> {
+    isOpen: boolean;
+    private modalOpen;
     static initAttrs(attrs: IFormDropdownAttrs): void;
     oninit(vnode: Mithril.Vnode<CustomAttrs, this>): void;
     oncreate(vnode: Mithril.VnodeDOM<CustomAttrs, this>): void;
