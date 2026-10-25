@@ -32,6 +32,17 @@ function genMarkupAwareMarkConfig(config: { open: string; close: string; [key: s
   };
 }
 
+/** Whether the run of `mark` from child `index` of `parent` onwards holds a hard break. */
+function spansHardBreak(mark: Mark, parent: any, index: number): boolean {
+  for (let i = index; i < parent.childCount; i++) {
+    const child = parent.child(i);
+    if (!mark.isInSet(child.marks)) return false;
+    if (child.type.name === 'hardBreak') return true;
+  }
+
+  return false;
+}
+
 (MarkdownSerializerState.prototype as any).esc = function (str: string, startOfLine?: boolean) {
   str = str.replace(/[`*\\~]/g, '\\$&');
   if (startOfLine) str = str.replace(/^[#\-*+]/, '\\$&').replace(/^(\s*\d+)\./, '$1\\.');
@@ -155,12 +166,18 @@ export default class MarkdownSerializerBuilder {
         },
       },
 
-      spoiler_inline: genMarkupAwareMarkConfig({
-        open: '>!',
-        close: '!<',
+      // `>!…!<` cannot hold a line break: at the start of a line Flarum reads
+      // `>!` as a block spoiler, and the rest of the text spills into it. A
+      // spoiler holding a hard break is written with bars, which can. The open
+      // decides for its close, since a mark mixed in around it can make the
+      // serializer close and reopen the spoiler part way through.
+      spoiler_inline: {
+        open: (state: MarkdownSerializerState, mark: Mark, parent: any, index: number) =>
+          ((state as any).spoilerBars = spansHardBreak(mark, parent, index)) ? '||' : '>!',
+        close: (state: MarkdownSerializerState) => ((state as any).spoilerBars ? '||' : '!<'),
         mixable: true,
         expelEnclosingWhitespace: true,
-      }),
+      },
 
       strike: genMarkupAwareMarkConfig({
         open: '~~',
