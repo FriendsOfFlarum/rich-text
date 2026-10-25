@@ -10,13 +10,21 @@ import ProseMirrorMenu from './components/ProseMirrorMenu';
 import MenuState from './states/MenuState';
 
 export default function applyEditor() {
+  extend(TextEditor.prototype, 'oninit', function () {
+    this.useRichTextEditor = app.session.user ? app.session.user.preferences().useRichTextEditor : true;
+  });
+
   extend(TextEditor.prototype, 'controlItems', function (items) {
     if (!app.forum.attribute('toggleRichTextEditorButton')) return;
 
     const buttonOnClick = () => {
+
+      this.useRichTextEditor = !app.session.user.preferences().useRichTextEditor;
+
+      app.composer.editor.destroy();
+      this.attrs.composer.editor = this.buildEditor(this.$('.TextEditor-editorContainer')[0]);
+
       app.session.user.savePreferences({ useRichTextEditor: !app.session.user.preferences().useRichTextEditor }).then(() => {
-        app.composer.editor.destroy();
-        this.attrs.composer.editor = this.buildEditor(this.$('.TextEditor-editorContainer')[0]);
         m.redraw.sync();
         app.composer.editor.focus();
       });
@@ -27,7 +35,7 @@ export default function applyEditor() {
       <Tooltip text={app.translator.trans('fof-rich-text.lib.composer.toggle_button')}>
         <Button
           icon="fas fa-pen-fancy"
-          className={classList({ Button: true, 'Button--icon': true, active: app.session.user.preferences().useRichTextEditor })}
+          className={classList({ Button: true, 'Button--icon': true, active: this.useRichTextEditor })}
           onclick={buttonOnClick}
         />
       </Tooltip>,
@@ -36,7 +44,7 @@ export default function applyEditor() {
   });
 
   extend(TextEditor.prototype, 'toolbarItems', function (items) {
-    if (!app.session.user.preferences().useRichTextEditor) return;
+    if (!this.useRichTextEditor) return;
 
     items.remove('markdown');
 
@@ -44,7 +52,7 @@ export default function applyEditor() {
   });
 
   extend(TextEditor.prototype, 'buildEditorParams', function (items) {
-    if (!app.session.user.preferences().useRichTextEditor) return;
+    if (!this.useRichTextEditor) return;
 
     items.menuState = this.menuState = new MenuState();
     items.classNames.push('Post-body');
@@ -53,7 +61,7 @@ export default function applyEditor() {
   });
 
   override(TextEditor.prototype, 'buildEditor', function (original, dom) {
-    if (app.session.user.preferences().useRichTextEditor) {
+    if (this.useRichTextEditor) {
       return new ProseMirrorEditorDriver(dom, this.buildEditorParams());
     }
 
