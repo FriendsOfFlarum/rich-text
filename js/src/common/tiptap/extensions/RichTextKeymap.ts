@@ -49,11 +49,11 @@ export const CompactParagraphs = Extension.create({
 
         const nodeBefore = state.selection.$from.nodeBefore;
         const nodeAfter = state.selection.$from.nodeAfter;
+        const hardBreak = state.schema.nodes.hardBreak;
 
-        if (nodeBefore && nodeBefore.text && nodeBefore.text.slice(-1) !== '\n') {
-          editor.commands.setHardBreak();
-          return true;
-        } else if (nodeBefore && !nodeBefore.text && !nodeAfter) {
+        if (nodeBefore && nodeBefore.type !== hardBreak) {
+          return editor.commands.setHardBreak();
+        } else if (nodeBefore?.type === hardBreak && !nodeAfter) {
           const { tr } = state;
           tr.delete(state.selection.from - 1, state.selection.from);
           editor.view.dispatch(tr);
