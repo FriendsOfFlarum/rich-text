@@ -8,6 +8,7 @@ import altText from './markdown-it/altText';
 import blockSpoiler from './markdown-it/blockSpoiler';
 import inlineSpoilerBars from './markdown-it/inlineSpoilerBars';
 import inlineSpoilerTags from './markdown-it/inlineSpoilerTags';
+import uploadImages from './markdown-it/uploadImages';
 
 export default class MarkdownParserBuilder {
   schema: Schema;
@@ -29,7 +30,8 @@ export default class MarkdownParserBuilder {
       .use(subPlugin)
       .use(supPlugin)
       .use(inlineSpoilerBars)
-      .use(inlineSpoilerTags);
+      .use(inlineSpoilerTags)
+      .use(uploadImages);
   }
 
   buildTokens(): Record<string, any> {
@@ -87,6 +89,11 @@ export default class MarkdownParserBuilder {
 
     return {
       ...remappedTokens,
+
+      fof_upload_image: {
+        node: 'fofUploadImage',
+        getAttrs: (token: { attrGet(name: string): string | null }) => ({ bbcode: token.attrGet('bbcode') }),
+      },
 
       // Explicitly override all standard tokens to ensure correct Tiptap v3 names
       ordered_list: { block: 'orderedList' },

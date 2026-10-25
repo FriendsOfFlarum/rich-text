@@ -15,6 +15,7 @@ import { MathInline } from './extensions/MathInline';
 import { Subscript } from './extensions/Subscript';
 import { Superscript } from './extensions/Superscript';
 import { DisableDataUriPaste } from './extensions/DisableDataUriPaste';
+import { UploadImage } from './extensions/UploadImage';
 import { RichTextKeymap, CompactParagraphs, LinkExitOnPaste } from './extensions/RichTextKeymap';
 import type EditorDriverInterface from 'flarum/common/utils/EditorDriverInterface';
 import type { EditorDriverParams } from 'flarum/common/utils/EditorDriverInterface';
@@ -155,6 +156,7 @@ export default class TiptapEditorDriver implements EditorDriverInterface {
     items.add('subscript', Subscript);
     items.add('superscript', Superscript);
     items.add('disableDataUriPaste', DisableDataUriPaste.configure({ deferImageFiles: Boolean(app.forum.attribute('fof-upload.canUpload')) }));
+    items.add('uploadImage', UploadImage);
     items.add('richTextKeymap', RichTextKeymap);
     items.add('linkExitOnPaste', LinkExitOnPaste);
 

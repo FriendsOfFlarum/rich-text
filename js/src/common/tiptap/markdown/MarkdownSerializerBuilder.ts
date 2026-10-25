@@ -75,6 +75,10 @@ export default class MarkdownSerializerBuilder {
     return {
       ...remappedNodes,
 
+      fofUploadImage(state: MarkdownSerializerState, node: any) {
+        state.write(node.attrs.bbcode);
+      },
+
       // Tiptap v3 BulletList has no `tight` attr; force tight serialization so
       // items are not separated by blank lines in the markdown output.
       bulletList(state: MarkdownSerializerState, node: any) {
