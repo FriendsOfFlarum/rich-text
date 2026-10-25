@@ -147,6 +147,9 @@ export default class TiptapMenu extends Component<ITiptapMenuAttrs> {
         tooltip: app.translator.trans('fof-rich-text.lib.composer.spoiler_inline_tooltip', { modifierKey }),
         editor: editor,
         mark: 'spoiler_inline',
+        command: (editor: Editor) => {
+          editor.chain().focus().toggleSpoilerInline().run();
+        },
       }),
       65
     );
@@ -275,11 +278,7 @@ export default class TiptapMenu extends Component<ITiptapMenuAttrs> {
         tooltip: app.translator.trans('fof-rich-text.lib.composer.spoiler_block_tooltip', { modifierKey }),
         editor: editor,
         command: (editor: import('@tiptap/core').Editor) => {
-          if (editor.isActive('spoiler')) {
-            editor.chain().focus().lift('spoiler').run();
-          } else {
-            editor.chain().focus().wrapIn('spoiler').run();
-          }
+          editor.chain().focus().toggleSpoilerBlock().run();
         },
       })
     );

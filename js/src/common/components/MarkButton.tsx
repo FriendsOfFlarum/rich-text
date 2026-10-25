@@ -6,7 +6,7 @@ export interface IMarkButtonAttrs extends ICommandButtonAttrs {
 
 export default class MarkButton extends CommandButton<IMarkButtonAttrs> {
   static initAttrs(attrs: IMarkButtonAttrs) {
-    attrs.command = (editor) => editor.chain().focus().toggleMark(attrs.mark).run();
+    attrs.command ??= (editor) => editor.chain().focus().toggleMark(attrs.mark).run();
   }
 
   isActive(): boolean {

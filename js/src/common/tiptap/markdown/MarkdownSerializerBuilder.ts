@@ -1,5 +1,5 @@
 import { defaultMarkdownSerializer, MarkdownSerializer, MarkdownSerializerState } from '@tiptap/pm/markdown';
-import type { Mark } from '@tiptap/pm/model';
+import type { Mark, Node as ProseMirrorNode } from '@tiptap/pm/model';
 
 /**
  * COPIED FROM https://github.com/StackExchange/Stacks-Editor/blob/main/src/rich-text/markdown-serializer.ts
@@ -132,6 +132,7 @@ export default class MarkdownSerializerBuilder {
 
   buildMarks(): Record<string, any> {
     const defaultLink = remappedMarks.link;
+    const spoilerBars = new WeakMap<MarkdownSerializerState, boolean>();
 
     return {
       ...remappedMarks,
@@ -155,12 +156,27 @@ export default class MarkdownSerializerBuilder {
         },
       },
 
-      spoiler_inline: genMarkupAwareMarkConfig({
-        open: '>!',
-        close: '!<',
+      spoiler_inline: {
+        open(state: MarkdownSerializerState, mark: Mark, parent: ProseMirrorNode, index: number) {
+          let multiline = false;
+          for (let i = index; i < parent.childCount; i++) {
+            const child = parent.child(i);
+            if (!mark.isInSet(child.marks)) break;
+            if (child.type.name === 'hardBreak') {
+              multiline = true;
+              break;
+            }
+          }
+          // Litedown treats >! at the start of a multiline run as a block spoiler.
+          spoilerBars.set(state, multiline);
+          return multiline ? '||' : '>!';
+        },
+        close(state: MarkdownSerializerState) {
+          return spoilerBars.get(state) ? '||' : '!<';
+        },
         mixable: true,
         expelEnclosingWhitespace: true,
-      }),
+      },
 
       strike: genMarkupAwareMarkConfig({
         open: '~~',

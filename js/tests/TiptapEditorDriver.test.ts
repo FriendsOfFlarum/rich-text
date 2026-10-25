@@ -238,6 +238,18 @@ describe('TiptapEditorDriver insertion', () => {
     expect(driver.editor.state.doc.textContent).toBe('beforeafter');
   });
 
+  it.each(['first\nsecond', 'first **bold**\nsecond', 'first\n**second**', 'first\nsecond\nthird'])(
+    'preserves an inline spoiler across a line break on a Markdown round trip: %j',
+    (source) => {
+      setContent(source);
+      driver.editor.commands.setTextSelection({ from: 1, to: driver.editor.state.doc.content.size - 1 });
+      driver.editor.commands.toggleSpoilerInline();
+      const document = driver.editor.state.doc.toJSON();
+
+      expect(driver.parser.parse(markdown()).toJSON()).toEqual(document);
+    }
+  );
+
   it('removes its input listeners when the driver is destroyed', () => {
     const listener = vi.fn();
     driver.attrs.inputListeners.push(listener);
