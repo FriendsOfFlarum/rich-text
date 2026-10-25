@@ -3,7 +3,8 @@ import './tiptap'; // ensure Node/Mark/Extension are registered in flarum.reg fo
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
 import Placeholder from '@tiptap/extension-placeholder';
-import { Selection, TextSelection } from '@tiptap/pm/state';
+import { TextSelection } from '@tiptap/pm/state';
+import { Slice } from '@tiptap/pm/model';
 import ItemList from 'flarum/common/utils/ItemList';
 
 import { MarkdownParserBuilder, MarkdownSerializerBuilder } from './markdown';
@@ -57,6 +58,7 @@ export default class TiptapEditorDriver implements EditorDriverInterface {
   attrs!: EditorDriverParams & { escape?: () => void };
   parser!: MarkdownParserBuilder['build'] extends () => infer R ? R : never;
   serializer!: MarkdownSerializerBuilder['build'] extends () => infer R ? R : never;
+  private cleanupInputListeners?: () => void;
 
   constructor(target: HTMLElement, attrs: EditorDriverParams & { escape?: () => void }) {
     this.build(target, attrs);
@@ -106,6 +108,11 @@ export default class TiptapEditorDriver implements EditorDriverInterface {
     (target as any).oninput = callInputListeners;
     (target as any).onclick = callInputListeners;
     (target as any).onkeyup = callInputListeners;
+    this.cleanupInputListeners = () => {
+      if (target.oninput === callInputListeners) target.oninput = null;
+      if (target.onclick === callInputListeners) target.onclick = null;
+      if (target.onkeyup === callInputListeners) target.onkeyup = null;
+    };
   }
 
   serializeContent(doc: any): string {
@@ -147,7 +154,7 @@ export default class TiptapEditorDriver implements EditorDriverInterface {
     items.add('mathInline', MathInline);
     items.add('subscript', Subscript);
     items.add('superscript', Superscript);
-    items.add('disableDataUriPaste', DisableDataUriPaste);
+    items.add('disableDataUriPaste', DisableDataUriPaste.configure({ deferImageFiles: Boolean(app.forum.attribute('fof-upload.canUpload')) }));
     items.add('richTextKeymap', RichTextKeymap);
     items.add('linkExitOnPaste', LinkExitOnPaste);
 
@@ -182,9 +189,10 @@ export default class TiptapEditorDriver implements EditorDriverInterface {
   }
 
   getLastNChars(n: number): string {
-    const lastNode = this.editor.state.selection.$from.nodeBefore;
-    if (!lastNode || !lastNode.text) return '';
-    return lastNode.text.slice(Math.max(0, lastNode.text.length - n));
+    const { parent, parentOffset } = this.editor.state.selection.$from;
+    // Formatting does not change positions. Represent inline leaves as one-character
+    // boundaries so autocomplete offsets stay aligned without crossing images or breaks.
+    return parent.textBetween(Math.max(0, parentOffset - n), parentOffset, undefined, '\n');
   }
 
   insertAtCursor(text: string, escape: boolean) {
@@ -198,29 +206,33 @@ export default class TiptapEditorDriver implements EditorDriverInterface {
 
   insertBetween(start: number, end: number, text: string, escape = true) {
     const { view } = this.editor;
-    const OFFSET_TO_REMOVE_PREFIX_NEWLINE = 1;
+    const transaction = view.state.tr.setSelection(TextSelection.create(view.state.doc, start, end));
+    const literal = escape || Boolean(transaction.selection.$from.parent.type.spec.code);
 
-    if (escape) {
-      view.dispatch(view.state.tr.insertText(text, start, end));
+    if (literal) {
+      transaction.insertText(text);
     } else {
-      // Without this, a newline would be added before the inserted text.
-      start -= OFFSET_TO_REMOVE_PREFIX_NEWLINE;
-
-      // Parse markdown using our custom parser. Block parsing already separates blocks
-      // and leaves a single empty paragraph after the inserted content as the cursor's
-      // landing spot, so we must NOT additionally replay the source's trailing newlines
-      // (e.g. the `\n\n` mentions appends after a quote) as Enter keypresses — that
-      // would stack up extra empty paragraphs only visible in the editor, which collapse
-      // on save (issue #10).
       const parsed = this.parser.parse(text);
-      view.dispatch(view.state.tr.replaceRangeWith(start, end, parsed));
+      let content = parsed.content;
+
+      // Leave a text position after a quote, list, or other non-text block.
+      if (parsed.lastChild && !parsed.lastChild.isTextblock) {
+        content = content.addToEnd(view.state.schema.nodes.paragraph.create());
+      }
+
+      // Open only paragraph boundaries, preserving quote and list wrappers.
+      // ProseMirror positions the selection after the inserted content, whose size may
+      // differ from the Markdown source. Never offset the caller's replacement range.
+      transaction.replaceSelection(
+        new Slice(content, content.firstChild?.type.name === 'paragraph' ? 1 : 0, content.lastChild?.type.name === 'paragraph' ? 1 : 0)
+      );
     }
 
-    // Move the cursor to the end of the inserted content.
-    this.moveCursorTo(Math.min(start + text.length + OFFSET_TO_REMOVE_PREFIX_NEWLINE, Selection.atEnd(view.state.doc).to));
+    view.dispatch(transaction);
+    this.focus();
     m.redraw();
 
-    if (text.endsWith(' ') && !escape) {
+    if (text.endsWith(' ') && !literal) {
       this.insertAtCursor(' ', true);
     }
   }
@@ -251,6 +263,7 @@ export default class TiptapEditorDriver implements EditorDriverInterface {
   }
 
   destroy() {
+    this.cleanupInputListeners?.();
     this.editor.destroy();
   }
 
