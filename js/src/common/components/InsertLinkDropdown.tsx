@@ -16,7 +16,6 @@ export default class InsertLinkDropdown extends FormDropdown<IInsertLinkDropdown
   title!: Stream<string>;
   active!: boolean;
   selectionEmpty!: boolean;
-  isOpen!: boolean;
 
   oninit(vnode: Mithril.Vnode<IInsertLinkDropdownAttrs, this>) {
     super.oninit(vnode);
@@ -26,18 +25,6 @@ export default class InsertLinkDropdown extends FormDropdown<IInsertLinkDropdown
     this.title = Stream('');
     this.active = false;
     this.selectionEmpty = true;
-    this.isOpen = false;
-  }
-
-  oncreate(vnode: Mithril.VnodeDOM<IInsertLinkDropdownAttrs, this>) {
-    super.oncreate(vnode);
-
-    this.$().on('shown.bs.dropdown', () => {
-      this.isOpen = true;
-    });
-    this.$().on('hidden.bs.dropdown', () => {
-      this.isOpen = false;
-    });
   }
 
   onupdate(vnode: Mithril.VnodeDOM<IInsertLinkDropdownAttrs, this>) {
@@ -135,7 +122,14 @@ export default class InsertLinkDropdown extends FormDropdown<IInsertLinkDropdown
         .insertContent(' ')
         .run();
     } else {
-      editor.chain().focus().setLink(linkAttrs).run();
+      const { from, to } = editor.state.selection;
+      const chain = editor.chain().focus();
+
+      if (editor.state.selection.empty) {
+        chain.extendMarkRange('link');
+      }
+
+      chain.setLink(linkAttrs).setTextSelection({ from, to }).run();
     }
 
     // Reset streams after insert
@@ -145,8 +139,9 @@ export default class InsertLinkDropdown extends FormDropdown<IInsertLinkDropdown
   }
 
   remove(_e: Event) {
-    $('body').trigger('click');
     this.attrs.editor.chain().focus().unsetLink().run();
+    app.modal.close();
+    $('body').trigger('click');
     (app as any).composer.editor?.focus();
   }
 }

@@ -17,6 +17,9 @@ export interface IFormDropdownAttrs extends IDropdownAttrs {
 }
 
 export default class FormDropdown<CustomAttrs extends IFormDropdownAttrs = IFormDropdownAttrs> extends Dropdown<CustomAttrs> {
+  isOpen = false;
+  private modalOpen = false;
+
   static initAttrs(attrs: IFormDropdownAttrs) {
     attrs.buttonClassName = 'Button Button--icon Button--link Button--menuDropdown';
   }
@@ -32,17 +35,29 @@ export default class FormDropdown<CustomAttrs extends IFormDropdownAttrs = IForm
       if (app.screen() === 'phone') {
         // Mobile Safari doesn't support fixed items
         // So, we wrap them in a modal.
+        this.modalOpen = true;
+        this.isOpen = true;
         app.modal.show(SafariModalHack, {
           title: this.attrs.tooltip,
           vnodeContent: this.fields().toArray(),
           onsubmit: this.onsubmit.bind(this),
+          onremove: () => {
+            this.modalOpen = false;
+            this.isOpen = false;
+          },
         });
         e.stopPropagation();
       }
     });
 
     this.$().on('shown.bs.dropdown', () => {
+      if (this.modalOpen) return;
+      this.isOpen = true;
       this.$('.Dropdown-menu').find('input, select, textarea').first().focus().select();
+    });
+
+    this.$().on('hidden.bs.dropdown', () => {
+      if (!this.modalOpen) this.isOpen = false;
     });
   }
 
@@ -95,11 +110,11 @@ export default class FormDropdown<CustomAttrs extends IFormDropdownAttrs = IForm
   }
 
   onsubmit(e: SubmitEvent) {
-    // Here for the safari workaround
-    app.modal.close();
     e.preventDefault();
-    $('body').trigger('click');
+    // Consume the fields before closing: modal removal can redraw the dropdown.
     this.insert(e);
+    app.modal.close();
+    $('body').trigger('click');
     (app as any).composer.editor?.focus();
   }
 
