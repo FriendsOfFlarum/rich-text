@@ -3,7 +3,8 @@ import './tiptap'; // ensure Node/Mark/Extension are registered in flarum.reg fo
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
 import Placeholder from '@tiptap/extension-placeholder';
-import { Selection, TextSelection } from '@tiptap/pm/state';
+import { Selection, TextSelection, type Transaction } from '@tiptap/pm/state';
+import { canSplit, insertPoint } from '@tiptap/pm/transform';
 import ItemList from 'flarum/common/utils/ItemList';
 
 import { MarkdownParserBuilder, MarkdownSerializerBuilder } from './markdown';
@@ -198,31 +199,92 @@ export default class TiptapEditorDriver implements EditorDriverInterface {
 
   insertBetween(start: number, end: number, text: string, escape = true) {
     const { view } = this.editor;
-    const OFFSET_TO_REMOVE_PREFIX_NEWLINE = 1;
 
     if (escape) {
       view.dispatch(view.state.tr.insertText(text, start, end));
+      this.moveCursorTo(Math.min(start + text.length + 1, Selection.atEnd(view.state.doc).to));
     } else {
-      // Without this, a newline would be added before the inserted text.
-      start -= OFFSET_TO_REMOVE_PREFIX_NEWLINE;
-
-      // Parse markdown using our custom parser. Block parsing already separates blocks
-      // and leaves a single empty paragraph after the inserted content as the cursor's
-      // landing spot, so we must NOT additionally replay the source's trailing newlines
-      // (e.g. the `\n\n` mentions appends after a quote) as Enter keypresses — that
-      // would stack up extra empty paragraphs only visible in the editor, which collapse
-      // on save (issue #10).
-      const parsed = this.parser.parse(text);
-      view.dispatch(view.state.tr.replaceRangeWith(start, end, parsed));
+      view.dispatch(this.insertMarkdown(start, end, text).scrollIntoView());
+      this.focus();
     }
 
-    // Move the cursor to the end of the inserted content.
-    this.moveCursorTo(Math.min(start + text.length + OFFSET_TO_REMOVE_PREFIX_NEWLINE, Selection.atEnd(view.state.doc).to));
     m.redraw();
+  }
 
-    if (text.endsWith(' ') && !escape) {
-      this.insertAtCursor(' ', true);
+  /**
+   * Replace start..end with parsed markdown, leaving the cursor where a textarea
+   * would: after the inserted text, or on a new line of its own when the text
+   * ends with one (fof/upload's BBCode, a mentions quote).
+   *
+   * The range comes from where the cursor is. Text with no line breaks that
+   * parses to one paragraph (a mention) goes inline. Blocks replace an empty
+   * paragraph, go before or after the paragraph when the cursor is at its edge,
+   * and otherwise split it. In a code block the text goes in as typed.
+   */
+  protected insertMarkdown(start: number, end: number, text: string): Transaction {
+    const { state } = this.editor.view;
+    const { schema } = state;
+    const tr = state.tr;
+    const newline = /\n\s*$/.test(text);
+
+    if (state.doc.resolve(start).parent.type.spec.code) {
+      return tr.insertText(text, start, end);
     }
+
+    const parsed = this.parser.parse(text);
+    const first = parsed.firstChild;
+
+    if (!text.includes('\n') && parsed.childCount === 1 && first?.type === schema.nodes.paragraph) {
+      tr.replaceWith(start, end, first.content);
+      tr.setSelection(TextSelection.near(tr.doc.resolve(tr.mapping.map(end)), -1));
+    } else {
+      // A selection is replaced like a textarea replaces it: removed, then the
+      // blocks go in at the cursor that is left.
+      tr.delete(start, end);
+
+      const $pos = tr.doc.resolve(start);
+      let from = start;
+      let to = start;
+      // Whether the block after the inserted ones is the rest of the line the
+      // cursor was on, which is where a trailing newline would leave it.
+      let restOfLine = false;
+
+      if ($pos.parent.isTextblock) {
+        const { parentOffset } = $pos;
+        // After this paragraph, or after its container where that only holds one.
+        const below = insertPoint(tr.doc, $pos.after(), schema.nodes.paragraph) ?? $pos.after();
+
+        if ($pos.parent.content.size === 0) [from, to] = [$pos.before(), $pos.after()];
+        else if (parentOffset === $pos.parent.content.size) from = to = below;
+        else if (parentOffset === 0) [from, to, restOfLine] = [$pos.before(), $pos.before(), true];
+        else if (canSplit(tr.doc, start)) {
+          // Mid-paragraph: split it, and the blocks go in between the halves.
+          tr.split(start);
+          [from, to, restOfLine] = [start + 1, start + 1, true];
+        } else from = to = below;
+      }
+
+      const steps = tr.steps.length;
+      tr.replaceWith(from, to, parsed.content);
+
+      // The end of the inserted blocks.
+      const after = tr.mapping.slice(steps).map(to);
+
+      if (!newline) {
+        tr.setSelection(Selection.near(tr.doc.resolve(after), -1));
+      } else {
+        if (!restOfLine || !tr.doc.resolve(after).nodeAfter?.isTextblock) {
+          tr.insert(after, schema.nodes.paragraph.create());
+        }
+
+        tr.setSelection(TextSelection.create(tr.doc, after + 1));
+      }
+    }
+
+    // Markdown parsing drops a trailing space, such as the one after a mention.
+    if (!newline && text.endsWith(' ') && tr.selection instanceof TextSelection) tr.insertText(' ');
+
+    return tr;
   }
 
   replaceBeforeCursor(start: number, text: string, escape: boolean) {
