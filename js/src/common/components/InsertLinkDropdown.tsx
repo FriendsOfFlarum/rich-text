@@ -16,7 +16,6 @@ export default class InsertLinkDropdown extends FormDropdown<IInsertLinkDropdown
   title!: Stream<string>;
   active!: boolean;
   selectionEmpty!: boolean;
-  isOpen!: boolean;
 
   oninit(vnode: Mithril.Vnode<IInsertLinkDropdownAttrs, this>) {
     super.oninit(vnode);
@@ -26,36 +25,30 @@ export default class InsertLinkDropdown extends FormDropdown<IInsertLinkDropdown
     this.title = Stream('');
     this.active = false;
     this.selectionEmpty = true;
-    this.isOpen = false;
-  }
-
-  oncreate(vnode: Mithril.VnodeDOM<IInsertLinkDropdownAttrs, this>) {
-    super.oncreate(vnode);
-
-    this.$().on('shown.bs.dropdown', () => {
-      this.isOpen = true;
-    });
-    this.$().on('hidden.bs.dropdown', () => {
-      this.isOpen = false;
-    });
   }
 
   onupdate(vnode: Mithril.VnodeDOM<IInsertLinkDropdownAttrs, this>) {
     super.onupdate(vnode);
 
-    if (this.isOpen) return;
+    this.$('.Dropdown-toggle').toggleClass('active', !!this.attrs.editor?.isActive('link'));
+  }
 
+  /**
+   * Fill the form from the link at the cursor. This runs once as the form opens,
+   * not on every redraw: the phone form is a modal, so the dropdown never counts
+   * as open, and each redraw while typing wiped the URL and title entered so far.
+   */
+  onopen() {
     const editor = this.attrs.editor;
     if (!editor) return;
 
-    this.active = editor.isActive('link');
-    this.$('.Dropdown-toggle').toggleClass('active', this.active);
-
     const attrs = editor.getAttributes('link');
+
+    this.active = editor.isActive('link');
+    this.selectionEmpty = editor.state.selection.empty;
+    this.text('');
     this.href(attrs.href || '');
     this.title(attrs.title || '');
-
-    this.selectionEmpty = editor.state.selection.empty;
   }
 
   fields() {
@@ -135,7 +128,11 @@ export default class InsertLinkDropdown extends FormDropdown<IInsertLinkDropdown
         .insertContent(' ')
         .run();
     } else {
-      editor.chain().focus().setLink(linkAttrs).run();
+      // Over the whole link at the cursor: with no selection, setLink alone only
+      // marks text typed next, so editing a link changed nothing. The selection
+      // is put back after, or the next keystroke would replace the link's text.
+      const { from, to } = editor.state.selection;
+      editor.chain().focus().extendMarkRange('link').setLink(linkAttrs).setTextSelection({ from, to }).run();
     }
 
     // Reset streams after insert
@@ -145,6 +142,8 @@ export default class InsertLinkDropdown extends FormDropdown<IInsertLinkDropdown
   }
 
   remove(_e: Event) {
+    // On a phone the form is a modal.
+    app.modal.close();
     $('body').trigger('click');
     this.attrs.editor.chain().focus().unsetLink().run();
     (app as any).composer.editor?.focus();

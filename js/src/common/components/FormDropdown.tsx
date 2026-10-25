@@ -30,6 +30,8 @@ export default class FormDropdown<CustomAttrs extends IFormDropdownAttrs = IForm
 
     this.$().on('click', (e) => {
       if (app.screen() === 'phone') {
+        this.onopen();
+
         // Mobile Safari doesn't support fixed items
         // So, we wrap them in a modal.
         app.modal.show(SafariModalHack, {
@@ -39,6 +41,11 @@ export default class FormDropdown<CustomAttrs extends IFormDropdownAttrs = IForm
         });
         e.stopPropagation();
       }
+    });
+
+    this.$().on('show.bs.dropdown', () => {
+      this.onopen();
+      m.redraw.sync();
     });
 
     this.$().on('shown.bs.dropdown', () => {
@@ -102,6 +109,9 @@ export default class FormDropdown<CustomAttrs extends IFormDropdownAttrs = IForm
     this.insert(e);
     (app as any).composer.editor?.focus();
   }
+
+  /** Called as the form opens, on a phone (as a modal) or otherwise (as the dropdown). */
+  onopen() {}
 
   insert(_e: SubmitEvent) {}
 }
