@@ -1,5 +1,6 @@
 import { defaultMarkdownSerializer, MarkdownSerializer, MarkdownSerializerState } from '@tiptap/pm/markdown';
 import type { Mark, Node as ProseMirrorNode } from '@tiptap/pm/model';
+import type { BBCodeNodeDefinition } from '../extensions/BBCodeNode';
 
 /**
  * COPIED FROM https://github.com/StackExchange/Stacks-Editor/blob/main/src/rich-text/markdown-serializer.ts
@@ -66,14 +67,20 @@ for (const [key, value] of Object.entries(oldMarks)) {
 
 export default class MarkdownSerializerBuilder {
   schema: any;
+  bbcodeNodes: BBCodeNodeDefinition[];
 
-  constructor(schema: any) {
+  constructor(schema: any, bbcodeNodes: BBCodeNodeDefinition[] = []) {
     this.schema = schema;
+    this.bbcodeNodes = bbcodeNodes;
   }
 
   buildNodes(): Record<string, any> {
     return {
       ...remappedNodes,
+
+      ...Object.fromEntries(
+        this.bbcodeNodes.map(({ name }) => [name, (state: MarkdownSerializerState, node: ProseMirrorNode) => state.write(node.attrs.bbcode)])
+      ),
 
       fofUploadImage(state: MarkdownSerializerState, node: any) {
         state.write(node.attrs.bbcode);

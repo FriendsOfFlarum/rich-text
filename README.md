@@ -51,7 +51,7 @@ This is a significant improvement over 1.x, where ~350 KB was added to every pag
 
 ### Is it extensible?
 
-Yes. The extension exposes two main extension points for third-party developers:
+Yes. The extension exposes three main extension points for third-party developers:
 
 **Add toolbar buttons:**
 ```js
@@ -68,6 +68,22 @@ import { extend } from 'flarum/common/extend';
 
 extend(fof.richText.tiptap.TiptapEditorDriver.prototype, 'buildExtensions', function (items) {
   items.add('myExtension', MyTiptapExtension);
+});
+```
+
+**Show your extension's BBCode as a preview instead of raw text:**
+
+The editor shows a matched BBCode as one unit and saves its source back unchanged. The editor loads lazily, so extend it by module path:
+
+```js
+import { extend } from 'flarum/common/extend';
+
+extend('ext:fof/rich-text/common/tiptap/TiptapEditorDriver', 'bbcodeNodes', function (items) {
+  items.add('acmeFoo', {
+    name: 'acmeFoo',
+    pattern: /\[foo\]([a-z0-9-]+)\[\/foo\]/i,
+    render: (match) => ['span', { class: 'AcmeFoo' }, match[1]],
+  });
 });
 ```
 
