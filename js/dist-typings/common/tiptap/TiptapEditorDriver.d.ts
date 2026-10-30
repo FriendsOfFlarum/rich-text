@@ -2,6 +2,7 @@ import { Editor } from '@tiptap/core';
 import './tiptap';
 import ItemList from 'flarum/common/utils/ItemList';
 import { MarkdownParserBuilder, MarkdownSerializerBuilder } from './markdown';
+import { type BBCodeNodeDefinition } from './extensions/BBCodeNode';
 import type EditorDriverInterface from 'flarum/common/utils/EditorDriverInterface';
 import type { EditorDriverParams } from 'flarum/common/utils/EditorDriverInterface';
 export default class TiptapEditorDriver implements EditorDriverInterface {
@@ -11,6 +12,7 @@ export default class TiptapEditorDriver implements EditorDriverInterface {
     };
     parser: MarkdownParserBuilder['build'] extends () => infer R ? R : never;
     serializer: MarkdownSerializerBuilder['build'] extends () => infer R ? R : never;
+    bbcodes: BBCodeNodeDefinition[];
     private cleanupInputListeners?;
     constructor(target: HTMLElement, attrs: EditorDriverParams & {
         escape?: () => void;
@@ -20,6 +22,8 @@ export default class TiptapEditorDriver implements EditorDriverInterface {
     }): void;
     serializeContent(doc: any): string;
     buildExtensions(): ItemList<any>;
+    /** BBCodes to show as a preview while keeping their source unchanged. */
+    bbcodeNodes(): ItemList<BBCodeNodeDefinition>;
     moveCursorTo(position: number): void;
     getSelectionRange(): [number, number];
     getLastNChars(n: number): string;
