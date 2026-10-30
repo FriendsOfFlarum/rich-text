@@ -9,12 +9,16 @@ import blockSpoiler from './markdown-it/blockSpoiler';
 import inlineSpoilerBars from './markdown-it/inlineSpoilerBars';
 import inlineSpoilerTags from './markdown-it/inlineSpoilerTags';
 import uploadImages from './markdown-it/uploadImages';
+import bbcodeNodes from './markdown-it/bbcodeNodes';
+import type { BBCodeNodeDefinition } from '../extensions/BBCodeNode';
 
 export default class MarkdownParserBuilder {
   schema: Schema;
+  bbcodeNodes: BBCodeNodeDefinition[];
 
-  constructor(schema: Schema) {
+  constructor(schema: Schema, bbcodeNodes: BBCodeNodeDefinition[] = []) {
     this.schema = schema;
+    this.bbcodeNodes = bbcodeNodes;
   }
 
   tokenizerParams(): markdownit.Options {
@@ -31,7 +35,8 @@ export default class MarkdownParserBuilder {
       .use(supPlugin)
       .use(inlineSpoilerBars)
       .use(inlineSpoilerTags)
-      .use(uploadImages);
+      .use(uploadImages)
+      .use(bbcodeNodes, this.bbcodeNodes);
   }
 
   buildTokens(): Record<string, any> {
@@ -89,6 +94,10 @@ export default class MarkdownParserBuilder {
 
     return {
       ...remappedTokens,
+
+      ...Object.fromEntries(
+        this.bbcodeNodes.map(({ name }) => [name, { node: name, getAttrs: (token: any) => ({ bbcode: token.attrGet('bbcode') }) }])
+      ),
 
       fof_upload_image: {
         node: 'fofUploadImage',

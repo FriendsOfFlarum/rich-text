@@ -16,6 +16,7 @@ import { Subscript } from './extensions/Subscript';
 import { Superscript } from './extensions/Superscript';
 import { DisableDataUriPaste } from './extensions/DisableDataUriPaste';
 import { UploadImage } from './extensions/UploadImage';
+import { createBBCodeNode, type BBCodeNodeDefinition } from './extensions/BBCodeNode';
 import { RichTextKeymap, CompactParagraphs, LinkExitOnPaste } from './extensions/RichTextKeymap';
 import type EditorDriverInterface from 'flarum/common/utils/EditorDriverInterface';
 import type { EditorDriverParams } from 'flarum/common/utils/EditorDriverInterface';
@@ -59,6 +60,7 @@ export default class TiptapEditorDriver implements EditorDriverInterface {
   attrs!: EditorDriverParams & { escape?: () => void };
   parser!: MarkdownParserBuilder['build'] extends () => infer R ? R : never;
   serializer!: MarkdownSerializerBuilder['build'] extends () => infer R ? R : never;
+  bbcodes: BBCodeNodeDefinition[] = [];
   private cleanupInputListeners?: () => void;
 
   constructor(target: HTMLElement, attrs: EditorDriverParams & { escape?: () => void }) {
@@ -67,6 +69,7 @@ export default class TiptapEditorDriver implements EditorDriverInterface {
 
   build(target: HTMLElement, attrs: EditorDriverParams & { escape?: () => void }) {
     this.attrs = attrs;
+    this.bbcodes = this.bbcodeNodes().toArray();
 
     // Create the editor first (without initial content) to get the schema
     this.editor = new Editor({
@@ -85,8 +88,8 @@ export default class TiptapEditorDriver implements EditorDriverInterface {
 
     // Build parser and serializer using the editor's schema
     const schema = this.editor.schema;
-    this.parser = new MarkdownParserBuilder(schema).build();
-    this.serializer = new MarkdownSerializerBuilder(schema).build();
+    this.parser = new MarkdownParserBuilder(schema, this.bbcodes).build();
+    this.serializer = new MarkdownSerializerBuilder(schema, this.bbcodes).build();
 
     // Parse and set initial content (emitUpdate=false to avoid marking composer dirty)
     if (attrs.value) {
@@ -157,6 +160,7 @@ export default class TiptapEditorDriver implements EditorDriverInterface {
     items.add('superscript', Superscript);
     items.add('disableDataUriPaste', DisableDataUriPaste.configure({ deferImageFiles: Boolean(app.forum.attribute('fof-upload.canUpload')) }));
     items.add('uploadImage', UploadImage);
+    this.bbcodes.forEach((definition) => items.add(`bbcode:${definition.name}`, createBBCodeNode(definition)));
     items.add('richTextKeymap', RichTextKeymap);
     items.add('linkExitOnPaste', LinkExitOnPaste);
 
@@ -177,6 +181,11 @@ export default class TiptapEditorDriver implements EditorDriverInterface {
     );
 
     return items;
+  }
+
+  /** BBCodes to show as a preview while keeping their source unchanged. */
+  bbcodeNodes(): ItemList<BBCodeNodeDefinition> {
+    return new ItemList<BBCodeNodeDefinition>();
   }
 
   // ── EditorDriverInterface ──────────────────────────────────────────
