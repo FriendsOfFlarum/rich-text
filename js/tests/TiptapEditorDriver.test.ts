@@ -137,6 +137,55 @@ describe('TiptapEditorDriver insertion', () => {
     }
   );
 
+  function blocks() {
+    return driver.editor.state.doc.content.content.map((node) => node.textContent);
+  }
+
+  it('puts Markdown that ends with a line break on its own line, then continues on the next', () => {
+    setContent('Before]');
+
+    driver.insertAtCursor('[upload]\n', false);
+    driver.insertAtCursor('After', true);
+
+    expect(blocks()).toEqual(['Before]', '[upload]', 'After']);
+    driver.editor.state.doc.check();
+  });
+
+  it('splits the line for Markdown ending with a line break inserted mid-line', () => {
+    setContent('beforeafter');
+
+    driver.insertAt(7, '[upload]\n', false);
+    driver.insertAtCursor('X', true);
+
+    expect(blocks()).toEqual(['before', '[upload]', 'Xafter']);
+  });
+
+  it('keeps the rest of the line after Markdown with a line break inserted at its start', () => {
+    setContent('after');
+
+    driver.insertAt(1, '[upload]\n', false);
+    driver.insertAtCursor('X', true);
+
+    expect(blocks()).toEqual(['[upload]', 'Xafter']);
+  });
+
+  it('stacks consecutive uploads one per line', () => {
+    driver.insertAtCursor('[first]\n', false);
+    driver.insertAtCursor('[second]\n', false);
+    driver.insertAtCursor('After', true);
+
+    expect(blocks()).toEqual(['[first]', '[second]', 'After']);
+  });
+
+  it('keeps inline Markdown without a line break on the same line', () => {
+    setContent('Before]');
+
+    driver.insertAtCursor('[upload]', false);
+    driver.insertAtCursor('After', true);
+
+    expect(blocks()).toEqual(['Before][upload]After']);
+  });
+
   it('keeps the cursor after escaped insertion at an explicit position', () => {
     setContent('beforeafter');
 
@@ -204,13 +253,13 @@ describe('TiptapEditorDriver insertion', () => {
     setContent('before');
 
     driver.insertAtCursor('[upload]\n', false);
-    expect(markdown()).toBe('before[upload]');
+    expect(markdown().trimEnd()).toBe('before\n\n[upload]');
 
     driver.editor.commands.undo();
     expect(markdown()).toBe('before');
 
     driver.editor.commands.redo();
-    expect(markdown()).toBe('before[upload]');
+    expect(markdown().trimEnd()).toBe('before\n\n[upload]');
   });
 
   it.each([

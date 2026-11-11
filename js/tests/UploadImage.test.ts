@@ -87,7 +87,8 @@ describe('FoF Upload image previews', () => {
     driver.insertAtCursor('AFTER', true);
 
     expect(uploads()).toEqual([preview, card]);
-    expect(serialize()).toBe('prefix]' + preview + card + 'AFTERsuffix');
+    // Each upload ends with a line break, so each stands on its own line.
+    expect(serialize()).toBe('prefix]\n\n' + preview + '\n\n' + card + '\n\nAFTERsuffix');
   });
 
   it('retains upload metadata when copying HTML between rich-text editors', () => {
