@@ -9,7 +9,7 @@ import SafariModalHack from '../src/common/components/SafariModalHack';
 
 const { app } = vi.hoisted(() => ({
   app: {
-    screen: () => 'phone',
+    screen: vi.fn(() => 'phone'),
     translator: { trans: (key: string) => key },
     modal: {} as any,
     composer: { editor: { focus: vi.fn() } },
@@ -27,6 +27,7 @@ describe('mobile link form', () => {
   let modal: { component: typeof SafariModalHack; attrs: Record<string, unknown> } | null;
 
   beforeEach(() => {
+    app.screen.mockReturnValue('phone');
     vi.stubGlobal('m', m);
     Object.assign(m, { Fragment: '[' });
     vi.stubGlobal('$', $);
@@ -119,6 +120,29 @@ describe('mobile link form', () => {
 
     expect(editor.state.doc.textContent).toBe('Label');
     expect(editor.state.doc.firstChild?.firstChild?.marks[0].attrs).toMatchObject({ href: 'https://example.com/new', title: 'New title' });
+  });
+
+  it('fills the form from the link at the cursor when it opens before a redraw', () => {
+    // Move onto an existing link without letting the dropdown redraw first.
+    editor.commands.setContent('<p><a href="https://example.com/old" title="Old title">Label</a></p>');
+    editor.commands.setTextSelection(3);
+    $(root).find('.Dropdown-toggle').trigger('click');
+
+    expect(modalRoot.querySelector('input[name="text"]')).toBeNull();
+    expect(modalRoot.querySelector<HTMLInputElement>('input[name="href"]')!.value).toBe('https://example.com/old');
+    expect(modalRoot.querySelector<HTMLInputElement>('input[name="title"]')!.value).toBe('Old title');
+    expect(modalRoot.querySelector('.Button--danger')).not.toBeNull();
+  });
+
+  it('fills the desktop dropdown from the link at the cursor as it opens', () => {
+    app.screen.mockReturnValue('desktop');
+    editor.commands.setContent('<p><a href="https://example.com/old" title="Old title">Label</a></p>');
+    editor.commands.setTextSelection(3);
+    $(root).find('.Dropdown').trigger('show.bs.dropdown');
+
+    expect(root.querySelector('input[name="text"]')).toBeNull();
+    expect(root.querySelector<HTMLInputElement>('input[name="href"]')!.value).toBe('https://example.com/old');
+    expect(root.querySelector<HTMLInputElement>('input[name="title"]')!.value).toBe('Old title');
   });
 
   it('does not modify the document when the modal is dismissed', () => {

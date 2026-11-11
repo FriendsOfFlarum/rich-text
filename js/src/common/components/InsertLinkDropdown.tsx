@@ -32,11 +32,23 @@ export default class InsertLinkDropdown extends FormDropdown<IInsertLinkDropdown
 
     if (this.isOpen) return;
 
+    this.fill();
+    this.$('.Dropdown-toggle').toggleClass('active', this.active);
+  }
+
+  /**
+   * Read the link at the cursor again as the form opens: the editor can have
+   * changed since the last redraw, and the phone form renders its fields once.
+   */
+  onopen() {
+    this.fill();
+  }
+
+  fill() {
     const editor = this.attrs.editor;
     if (!editor) return;
 
     this.active = editor.isActive('link');
-    this.$('.Dropdown-toggle').toggleClass('active', this.active);
 
     const attrs = editor.getAttributes('link');
     this.href(attrs.href || '');
