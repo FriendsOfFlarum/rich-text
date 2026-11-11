@@ -5,6 +5,7 @@ import Image from '@tiptap/extension-image';
 import Placeholder from '@tiptap/extension-placeholder';
 import { TextSelection } from '@tiptap/pm/state';
 import { Slice } from '@tiptap/pm/model';
+import { canSplit } from '@tiptap/pm/transform';
 import ItemList from 'flarum/common/utils/ItemList';
 
 import { MarkdownParserBuilder, MarkdownSerializerBuilder } from './markdown';
@@ -219,9 +220,20 @@ export default class TiptapEditorDriver implements EditorDriverInterface {
     const { view } = this.editor;
     const transaction = view.state.tr.setSelection(TextSelection.create(view.state.doc, start, end));
     const literal = escape || Boolean(transaction.selection.$from.parent.type.spec.code);
+    const { $from } = transaction.selection;
+    const ownLine = !literal && /\n\s*$/.test(text) && $from.parent.isTextblock && ($from.parentOffset === 0 || canSplit(transaction.doc, start));
 
     if (literal) {
       transaction.insertText(text);
+    } else if (ownLine) {
+      // Text that ends with a line break (fof/upload's BBCode, a mentions quote) stands
+      // on its own line, and the cursor goes to the start of the line after it, as in
+      // a textarea. Split the line at the cursor, then put the blocks before its rest.
+      transaction.deleteSelection();
+      if ($from.parentOffset > 0) transaction.split(start);
+
+      const line = transaction.selection.$from.before();
+      transaction.replaceWith(line, line, this.parser.parse(text).content);
     } else {
       const parsed = this.parser.parse(text);
       let content = parsed.content;
@@ -243,7 +255,7 @@ export default class TiptapEditorDriver implements EditorDriverInterface {
     this.focus();
     m.redraw();
 
-    if (text.endsWith(' ') && !literal) {
+    if (text.endsWith(' ') && !literal && !ownLine) {
       this.insertAtCursor(' ', true);
     }
   }
